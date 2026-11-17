@@ -103,13 +103,14 @@ async function load(model, force) {
 }
 
 // 30초 이하 조각으로 자르되, 가장 조용한 지점에서 자릅니다 (말이 중간에 잘리지 않게).
-function split(audio) {
+// audio: Float32Array(-1~1) 또는 Int16Array(녹화 중에 따로 받아 둔 소리). scale로 -1~1 범위로 맞춥니다.
+function split(audio, scale) {
   const frame = Math.round(SR * 0.1);
   const n = Math.floor(audio.length / frame);
   const rms = new Float32Array(n + 1);
   for (let f = 0; f < n; f++) {
     let s = 0;
-    for (let i = f * frame; i < (f + 1) * frame; i++) s += audio[i] * audio[i];
+    for (let i = f * frame; i < (f + 1) * frame; i++) { const v = audio[i] * scale; s += v * v; }
     rms[f] = Math.sqrt(s / frame);
   }
   const minLen = 18 * SR, maxLen = 28 * SR;
@@ -126,8 +127,14 @@ function split(audio) {
   segs.push([start, audio.length]);
   return segs.map(([a, b]) => {
     let peak = 0;
-    for (let f = Math.floor(a / frame); f < Math.floor(b / frame); f++) peak = Math.max(peak, rms[f]);
-    return { a, b, peak };
+    const fa = Math.floor(a / frame), fb = Math.floor(b / frame);
+    for (let f = fa; f < fb; f++) peak = Math.max(peak, rms[f]);
+    // 조각 앞부분의 무음은 잘라내요. Whisper는 앞이 조용하면 첫 자막을 0초로 잡아 버려서 시간이 어긋나요.
+    const th = Math.max(0.004, peak * 0.06);
+    let f = fa;
+    while (f < fb && rms[f] < th) f++;
+    const start = Math.max(a, (f - 3) * frame); // 말 시작 0.3초 전부터
+    return { a: start < b ? start : a, b, peak };
   });
 }
 
@@ -145,12 +152,14 @@ async function handle(msg) {
     }
     return;
   }
-  const { audio, model, language, force } = msg;
+  const { model, language, force } = msg;
+  const audio = msg.pcm16 || msg.audio;
+  const scale = msg.pcm16 ? 1 / 32768 : 1;
   try {
     const device = await load(model, force);
     self.postMessage({ type: 'ready', device });
 
-    const segs = split(audio);
+    const segs = split(audio, scale);
     const total = audio.length / SR;
     for (let i = 0; i < segs.length; i++) {
       const { a, b, peak } = segs[i];
@@ -160,7 +169,9 @@ async function handle(msg) {
       if (len >= 0.5 && peak > 0.004) {
         const opts = { task: 'transcribe', return_timestamps: true };
         if (language) opts.language = language;
-        const out = await asr(audio.subarray(a, b), opts);
+        const seg = new Float32Array(b - a);
+        for (let k = 0; k < seg.length; k++) seg[k] = audio[a + k] * scale;
+        const out = await asr(seg, opts);
         const chunks = out.chunks && out.chunks.length ? out.chunks : [{ timestamp: [0, len], text: out.text || '' }];
         for (const c of chunks) {
           const text = (c.text || '').trim();

@@ -274,6 +274,54 @@
   .big-link:disabled { color: rgba(255,255,255,.3); cursor: default; }
   .small-link { border: 0; background: none; color: rgba(255,255,255,.6); cursor: pointer; font-size: 14px; padding: 0 0 6px; }
   .small-link:hover { color: #fff; }
+  .nav button .tag.live { color: var(--orange); font-weight: 600; }
+  .btn svg { margin-left: -2px; }
+
+  /* 예약 대기 카드 (첫 화면) */
+  .sch-card {
+    margin-top: 18px; display: flex; align-items: center; gap: 14px; max-width: 520px;
+    background: rgba(20, 12, 8, .45); border: 1px solid rgba(255,255,255,.18); border-radius: 14px;
+    padding: 12px 14px; backdrop-filter: blur(10px);
+  }
+  .sch-ic { width: 40px; height: 40px; border-radius: 50%; background: rgba(244,163,90,.18); color: var(--orange-2); display: grid; place-items: center; flex: none; animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { background: rgba(244,163,90,.32); } }
+  .sch-txt { flex: 1; display: flex; flex-direction: column; line-height: 1.35; }
+  .sch-txt small { font-size: 11.5px; letter-spacing: .06em; color: rgba(255,255,255,.6); }
+  .sch-txt b { font-size: 15px; font-weight: 600; }
+  .sch-txt span { font-size: 13px; color: var(--orange-2); font-variant-numeric: tabular-nums; }
+
+  /* 예약 설정 창 */
+  .modal { position: fixed; inset: 0; z-index: 50; background: rgba(12, 8, 6, .55); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px; animation: enter .2s ease; }
+  .modal-card { width: min(600px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--panel); border-radius: 8px; padding: 30px 32px; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; }
+  .modal-desc { margin: 10px 0 22px; font-size: 13.5px; color: var(--muted); }
+  .sch-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; }
+  .sch-grid.two { grid-template-columns: 1fr 1fr; }
+  .field input[type=date], .field input[type=time] {
+    width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; background: #fafaf9;
+    font: inherit; font-size: 14px; color: var(--ink);
+  }
+  .sch-summary { margin: 2px 0 14px; font-size: 13.5px; font-weight: 600; color: var(--orange); min-height: 1.4em; }
+  .howto { margin: 0 0 6px; padding: 14px 16px 14px 32px; background: #f7f6f3; border-radius: 8px; font-size: 13px; color: #55534e; display: flex; flex-direction: column; gap: 4px; }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  @media (max-width: 560px) { .sch-grid { grid-template-columns: 1fr 1fr; } .sch-grid .field:first-child { grid-column: 1 / -1; } }
+
+  /* 좁은 화면 (휴대폰·작은 창) */
+  .logo, .pill-btn { white-space: nowrap; }
+  @media (max-width: 760px) {
+    .topbar { padding: 18px 16px 10px 64px; gap: 12px; }
+    .links { display: none; }
+    .topbar .pill-btn { margin-left: auto; }
+    .hero-body { padding: 24px 20px 28px; max-width: none; }
+    .thumbs { position: static; padding: 0 20px 28px; flex-wrap: wrap; }
+    .thumb { width: calc(50% - 6px); height: 96px; }
+    .steps-rail { display: none; }
+    .page { padding: 64px 16px 28px; }
+    .panel { padding: 24px 20px; }
+    .save-col { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; margin-top: 20px; min-height: 0; }
+    .big-link { font-size: 24px; }
+  }
+
   .notice { position: relative; z-index: 3; margin: 16px 48px 0; background: #fff3ea; color: #8a3f0f; border-radius: 10px; padding: 12px 14px; font-size: 13.5px; }
 </style>
 </head>
@@ -288,6 +336,7 @@
   <nav class="nav">
     <button id="navNew"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>새로 녹화</button>
     <button id="navImport"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>영상 불러오기</button>
+    <button id="navSchedule"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M5 4L2.5 6.5M19 4l2.5 2.5"/></svg>예약 녹화</button>
   </nav>
   <div class="side-label" style="cursor:default">작업 단계</div>
   <nav class="nav" id="stepNav">
@@ -331,7 +380,13 @@
         <p class="lead">화면과 컴퓨터 소리를 녹화하면, AI가 영상 속 말을 받아 적어 자막을 달아 드려요.</p>
         <div class="cta">
           <button id="btnRec" class="btn orange"><span class="dot"></span><span class="lbl">녹화 시작</span></button>
+          <button id="btnSchedule" class="btn ghost"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/></svg>예약 녹화</button>
           <button id="btnImport" class="btn ghost">영상 불러오기</button>
+        </div>
+        <div class="sch-card" id="schCard" hidden>
+          <span class="sch-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M5 4L2.5 6.5M19 4l2.5 2.5"/></svg></span>
+          <div class="sch-txt"><small>예약 녹화 대기 중</small><b id="schWhen"></b><span id="schLeft"></span></div>
+          <button class="pill-btn" id="schCancel">예약 취소</button>
         </div>
         <div class="rec-line" id="recLine"><span class="timer" id="timer">00:00</span><span id="recStatus"></span></div>
         <div class="chips" id="chips">
@@ -480,6 +535,37 @@
     <div class="cap"><span id="capText"></span></div>
   </div>
   <input id="fileIn" type="file" accept="video/*,audio/*" hidden>
+
+  <!-- 예약 녹화 설정 창 -->
+  <div class="modal" id="schModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="schTitle">
+      <div class="modal-head">
+        <div class="ttl"><h2 id="schTitle">Schedule</h2><p class="ko">예약 녹화</p></div>
+        <button class="ibtn" id="schClose" title="닫기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <p class="modal-desc">정해진 시간에 알아서 녹화를 시작하고, 끝나면 자막까지 만들어요.</p>
+      <div class="sch-grid">
+        <div class="field"><label for="schDate">날짜</label><input type="date" id="schDate"></div>
+        <div class="field"><label for="schStart">시작</label><input type="time" id="schStart"></div>
+        <div class="field"><label for="schEnd">끝</label><input type="time" id="schEnd"></div>
+      </div>
+      <div class="sch-grid two">
+        <div class="field"><label for="schLang">자막 언어</label><select id="schLang"></select></div>
+        <div class="field"><label for="schModel">정확도</label><select id="schModel"></select></div>
+      </div>
+      <div class="sch-summary" id="schSummary"></div>
+      <ol class="howto">
+        <li>아래 버튼을 누르면 화면 선택 창이 떠요. <b>전체 화면</b>을 고르고 <b>시스템 오디오 공유</b>를 켜 주세요.</li>
+        <li>예약 시간까지 <b>이 탭을 닫지 말고</b>, PC가 <b>절전 모드로 가지 않게</b> 해 주세요.</li>
+        <li>재부팅하거나 탭을 닫으면 예약이 취소돼요. 한 번에 최대 4시간까지 예약할 수 있어요.</li>
+      </ol>
+      <div class="status warn" id="schErr"></div>
+      <div class="modal-foot">
+        <button class="btn light" onclick="document.getElementById('schModal').hidden = true">닫기</button>
+        <button class="btn orange" id="schOk">예약하고 화면 공유 허락하기</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -613,8 +699,8 @@ function renderRecents() {
     box.appendChild(el);
   }
 }
-async function saveNewItem(blob, name, duration) {
-  const item = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), name, created: Date.now(), duration, blob, cues: [] };
+async function saveNewItem(blob, name, duration, pcm) {
+  const item = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), name, created: Date.now(), duration, blob, pcm: pcm || null, cues: [] };
   state.item = item;
   recents.unshift({ id: item.id, name, created: item.created });
   try {
@@ -683,7 +769,7 @@ document.addEventListener('click', (e) => {
 function updateNav() {
   const n = state.cues.length;
   const tags = {
-    home: state.screen === 'home' && recorder && recorder.state === 'recording' ? '녹화 중' : '',
+    home: isRecording() ? '녹화 중' : (schedule && !schedule.fired) ? '예약 ' + fmtHM(schedule.start) : '',
     sub: !state.blob ? ICON.lock : n ? ICON.check : '',
     review: !n ? ICON.lock : '',
     done: !n ? ICON.lock : '',
@@ -695,6 +781,7 @@ function updateNav() {
     const tag = b.querySelector('.tag');
     tag.innerHTML = tags[k];
     tag.classList.toggle('ok', k === 'sub' && n > 0);
+    tag.classList.toggle('live', k === 'home' && !!tags.home);
   });
   document.querySelectorAll('.links button, .thumb').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
   document.querySelectorAll('.thumb').forEach((t) => {
@@ -719,7 +806,9 @@ let recentOpen = true;
 $('recentToggle').onclick = () => { recentOpen = !recentOpen; $('recent').style.display = recentOpen ? '' : 'none'; $('recentToggle').querySelector('svg').style.transform = recentOpen ? '' : 'rotate(-90deg)'; };
 
 // ---------- 1. 녹화 ----------
-let recorder = null, recStream = null, recStart = 0, timerId = 0;
+let recorder = null, recStream = null, recStart = 0, timerId = 0, autoStopTimer = 0;
+const isRecording = () => !!(recorder && recorder.state === 'recording');
+const APP_TITLE = '녹화 자막 메이커';
 
 function setRecUI(on) {
   document.body.classList.toggle('recording', on);
@@ -728,51 +817,236 @@ function setRecUI(on) {
   b.querySelector('.lbl').textContent = on ? '녹화 멈추기' : '녹화 시작';
   $('chips').hidden = on;
   $('btnImport').disabled = on; $('topImport').disabled = on; $('navImport').disabled = on;
+  $('btnSchedule').disabled = on; $('navSchedule').disabled = on;
+  document.title = on ? '● 녹화 중 · ' + APP_TITLE : APP_TITLE;
 }
-async function startRecording() {
-  if (!navigator.mediaDevices?.getDisplayMedia) {
-    return setStatus('recStatus', '이 브라우저는 화면 녹화를 지원하지 않아요. Chrome이나 Edge로 열어 주세요.', 'warn');
+
+// 녹화하는 동안 소리를 16kHz 모노로 따로 받아 둡니다.
+// 긴 녹화도 영상 전체를 다시 풀지 않고 바로 자막을 만들 수 있어요. (2시간 ≈ 230MB)
+const TAP_CODE = `class Tap extends AudioWorkletProcessor {
+  constructor() { super(); this.buf = new Int16Array(16000); this.n = 0; this.port.onmessage = () => this.flush(); }
+  flush() { if (this.n) { this.port.postMessage(this.buf.slice(0, this.n)); this.n = 0; } }
+  process(inputs, outputs) {
+    // 소리가 없을 때 Chrome은 채널을 0개로 넘겨요. 그때도 '무음'으로 채워야 시간이 영상과 어긋나지 않아요.
+    const ch = inputs[0] || [];
+    const len = (ch[0] && ch[0].length) || (outputs[0] && outputs[0][0] && outputs[0][0].length) || 128;
+    for (let i = 0; i < len; i++) {
+      let s = 0;
+      if (ch.length) { for (let c = 0; c < ch.length; c++) s += ch[c][i]; s /= ch.length; }
+      this.buf[this.n++] = (s < -1 ? -1 : s > 1 ? 1 : s) * 32767;
+      if (this.n === this.buf.length) this.flush();
+    }
+    return true;
   }
-  if (state.busy) return;
+}
+registerProcessor('pcm-tap', Tap);`;
+async function startTap(stream) {
+  const track = stream.getAudioTracks()[0];
+  if (!track || !window.AudioWorkletNode) return null;
   try {
-    recStream = await navigator.mediaDevices.getDisplayMedia({
+    const ctx = new AudioContext({ sampleRate: 16000 });
+    const url = URL.createObjectURL(new Blob([TAP_CODE], { type: 'text/javascript' }));
+    await ctx.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+    const node = new AudioWorkletNode(ctx, 'pcm-tap');
+    const tap = { ctx, node, chunks: [], on: false };
+    node.port.onmessage = (e) => { if (tap.on) tap.chunks.push(e.data); };
+    ctx.createMediaStreamSource(new MediaStream([track])).connect(node);
+    node.connect(ctx.destination); // 아무 소리도 내보내지 않음 (처리가 계속 돌도록 연결만)
+    await ctx.resume();
+    return tap;
+  } catch (err) {
+    console.warn('소리 따로 받기 실패', err);
+    return null;
+  }
+}
+async function finishTap(tap) {
+  if (!tap) return null;
+  tap.node.port.postMessage('flush');
+  await new Promise((r) => setTimeout(r, 200));
+  tap.on = false;
+  const total = tap.chunks.reduce((s, c) => s + c.length, 0);
+  const out = new Int16Array(total);
+  let o = 0;
+  for (const c of tap.chunks) { out.set(c, o); o += c.length; }
+  tap.ctx.close();
+  return total ? out : null;
+}
+
+async function acquireStream() {
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    setStatus('recStatus', '이 브라우저는 화면 녹화를 지원하지 않아요. Chrome이나 Edge로 열어 주세요.', 'warn');
+    return null;
+  }
+  try {
+    return await navigator.mediaDevices.getDisplayMedia({
       video: { frameRate: { ideal: 30 } },
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, suppressLocalAudioPlayback: false },
       systemAudio: 'include', selfBrowserSurface: 'exclude', surfaceSwitching: 'include',
     });
   } catch (err) {
-    return setStatus('recStatus', err.name === 'NotAllowedError' ? '녹화를 취소했어요.' : '녹화를 시작하지 못했어요: ' + err.message, 'warn');
+    setStatus('recStatus', err.name === 'NotAllowedError' ? '화면 공유를 취소했어요.' : '화면 공유를 시작하지 못했어요: ' + err.message, 'warn');
+    return null;
   }
-  const hasAudio = recStream.getAudioTracks().length > 0;
+}
+
+function beginRecording(stream, tap, opts = {}) {
+  recStream = stream;
+  const hasAudio = stream.getAudioTracks().length > 0;
   const mime = pickMime();
   const chunks = [];
-  recorder = new MediaRecorder(recStream, { mimeType: mime, videoBitsPerSecond: 5_000_000, audioBitsPerSecond: 160_000 });
+  // 예약 녹화는 길어질 수 있어서 화질을 조금 낮춰 파일 크기를 줄여요 (화면 글자는 충분히 선명).
+  recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: opts.scheduled ? 2_500_000 : 5_000_000, audioBitsPerSecond: 128_000 });
   recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = async () => {
     const secs = (performance.now() - recStart) / 1000;
-    recStream.getTracks().forEach((t) => t.stop());
-    clearInterval(timerId);
+    clearInterval(timerId); clearTimeout(autoStopTimer);
+    const pcm = await finishTap(tap);
+    stream.getTracks().forEach((t) => t.stop());
+    schedule = null;
+    releaseWake();
     setRecUI(false);
+    renderSchedule();
     const blob = new Blob(chunks, { type: (recorder.mimeType || mime).split(';')[0] });
-    setStatus('recStatus', `녹화 완료 (${fmtClock(secs)})${hasAudio ? '' : ' · 소리 없이 녹화됐어요'}`, hasAudio ? '' : 'warn');
-    await loadVideo(blob, `녹화_${stamp()}.${extOf(blob.type)}`, secs, hasAudio);
+    setStatus('recStatus', `${opts.scheduled ? '예약 녹화' : '녹화'} 완료 (${fmtClock(secs)})${hasAudio ? '' : ' · 소리 없이 녹화됐어요'}`, hasAudio ? '' : 'warn');
+    await loadVideo(blob, `${opts.scheduled ? '예약녹화' : '녹화'}_${stamp()}.${extOf(blob.type)}`, secs, hasAudio, null, pcm);
     go('sub');
+    if (opts.scheduled && hasAudio) makeSubtitles(); // 예약 녹화는 자막까지 알아서
   };
-  recStream.getVideoTracks()[0].addEventListener('ended', stopRecording);
+  stream.getVideoTracks()[0].onended = stopRecording; // 브라우저의 "공유 중지"를 눌러도 멈춤
   recorder.start(1000);
   recStart = performance.now();
+  if (tap) tap.on = true;
   preload();
   setRecUI(true);
+  if (opts.scheduled) requestWake();
   $('timer').textContent = '00:00';
-  timerId = setInterval(() => { $('timer').textContent = fmtClock((performance.now() - recStart) / 1000); }, 250);
-  setStatus('recStatus', hasAudio
-    ? '화면과 컴퓨터 소리를 녹화하고 있어요.'
-    : '소리 공유가 꺼져 있어 소리는 녹음되지 않아요. 멈춘 뒤 "시스템 오디오 공유"를 켜고 다시 시작하세요.', hasAudio ? '' : 'warn');
+  timerId = setInterval(() => {
+    $('timer').textContent = fmtClock((performance.now() - recStart) / 1000);
+    if (opts.endAt && Date.now() >= opts.endAt) stopRecording();
+  }, 250);
+  if (opts.endAt) autoStopTimer = setTimeout(stopRecording, Math.max(0, opts.endAt - Date.now()));
+  setStatus('recStatus', !hasAudio
+    ? '소리 공유가 꺼져 있어 소리는 녹음되지 않아요. 멈춘 뒤 "시스템 오디오 공유"를 켜고 다시 시작하세요.'
+    : opts.scheduled ? `예약 녹화 중이에요. ${fmtHM(new Date(opts.endAt))}에 알아서 끝나고 자막까지 만들어요.`
+    : '화면과 컴퓨터 소리를 녹화하고 있어요.', hasAudio ? '' : 'warn');
   updateNav();
 }
+async function startRecording() {
+  if (state.busy || schedule || isRecording()) return;
+  const stream = await acquireStream();
+  if (!stream) return;
+  const tap = await startTap(stream);
+  beginRecording(stream, tap);
+}
 function stopRecording() { if (recorder && recorder.state !== 'inactive') recorder.stop(); }
-$('btnRec').onclick = () => (recorder && recorder.state === 'recording' ? stopRecording() : startRecording());
-$('navNew').onclick = () => { go('home'); if (!(recorder && recorder.state === 'recording')) startRecording(); };
+$('btnRec').onclick = () => (isRecording() ? stopRecording() : startRecording());
+$('navNew').onclick = () => { go('home'); if (!isRecording() && !schedule) startRecording(); };
+
+// ---------- 예약 녹화 ----------
+let schedule = null; // { start, end, stream, tap, fired, to, iv }
+const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const pad2 = (n) => String(n).padStart(2, '0');
+const fmtHM = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+const fmtDay = (d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+function openSchedule() {
+  if (isRecording() || schedule || state.busy) return;
+  const s = new Date(Date.now() + 10 * 60000);
+  s.setMinutes(Math.ceil(s.getMinutes() / 5) * 5, 0, 0);
+  const e = new Date(s.getTime() + 60 * 60000);
+  $('schDate').value = ymd(s); $('schDate').min = ymd(new Date());
+  $('schStart').value = fmtHM(s); $('schEnd').value = fmtHM(e);
+  $('schLang').innerHTML = $('lang').innerHTML; $('schLang').value = $('lang').value;
+  $('schModel').innerHTML = $('model').innerHTML; $('schModel').value = $('model').value;
+  $('schErr').textContent = '';
+  updateSchSummary();
+  $('schModal').hidden = false;
+  closeSide();
+}
+function readSchedule() {
+  const start = new Date(`${$('schDate').value}T${$('schStart').value}`);
+  let end = new Date(`${$('schDate').value}T${$('schEnd').value}`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return { err: '날짜와 시간을 입력해 주세요.' };
+  if (end <= start) end = new Date(end.getTime() + 86400000); // 자정을 넘기는 예약
+  if (start.getTime() < Date.now() - 30000) return { err: '시작 시간이 이미 지났어요.' };
+  if (end - start > 4 * 3600000) return { err: '한 번에 최대 4시간까지 예약할 수 있어요.' };
+  return { start, end };
+}
+function updateSchSummary() {
+  const r = readSchedule();
+  $('schSummary').textContent = r.err ? '' : `${fmtDay(r.start)} ${fmtHM(r.start)} ~ ${fmtDay(r.end) === fmtDay(r.start) ? '' : fmtDay(r.end) + ' '}${fmtHM(r.end)} · ${fmtClock((r.end - r.start) / 1000)} 녹화`;
+}
+['schDate', 'schStart', 'schEnd'].forEach((id) => $(id).addEventListener('input', updateSchSummary));
+async function confirmSchedule() {
+  const r = readSchedule();
+  if (r.err) { $('schErr').textContent = r.err; return; }
+  $('lang').value = $('schLang').value;
+  $('model').value = $('schModel').value;
+  $('schErr').textContent = '';
+  const stream = await acquireStream();
+  if (!stream) { $('schErr').textContent = '화면 공유를 허락해야 예약할 수 있어요.'; return; }
+  const tap = await startTap(stream);
+  $('schModal').hidden = true;
+  schedule = { start: r.start, end: r.end, stream, tap, fired: false };
+  stream.getVideoTracks()[0].onended = () => cancelSchedule('화면 공유가 중지되어 예약이 취소됐어요.');
+  const fire = () => {
+    if (!schedule || schedule.fired || Date.now() < schedule.start.getTime()) return;
+    schedule.fired = true;
+    clearTimeout(schedule.to); clearInterval(schedule.iv);
+    beginRecording(schedule.stream, schedule.tap, { scheduled: true, endAt: schedule.end.getTime() });
+    renderSchedule();
+  };
+  schedule.to = setTimeout(fire, Math.max(0, r.start - Date.now()));
+  schedule.iv = setInterval(() => { fire(); renderSchedule(); }, 1000);
+  requestWake();
+  preload();
+  const noAudio = !stream.getAudioTracks().length;
+  setStatus('recStatus', noAudio
+    ? '예약됐지만 소리 공유가 꺼져 있어요. 소리와 자막이 필요하면 예약을 취소하고 "시스템 오디오 공유"를 켜서 다시 예약하세요.'
+    : '예약됐어요. 시간이 되면 알아서 녹화하고 자막까지 만들어요.', noAudio ? 'warn' : '');
+  renderSchedule();
+  updateNav();
+}
+function cancelSchedule(msg) {
+  if (!schedule || schedule.fired) return;
+  clearTimeout(schedule.to); clearInterval(schedule.iv);
+  schedule.stream.getTracks().forEach((t) => t.stop());
+  if (schedule.tap) schedule.tap.ctx.close();
+  schedule = null;
+  releaseWake();
+  renderSchedule();
+  updateNav();
+  setStatus('recStatus', msg || '예약을 취소했어요.', msg ? 'warn' : '');
+}
+function renderSchedule() {
+  const waiting = !!(schedule && !schedule.fired);
+  $('schCard').hidden = !waiting;
+  $('btnRec').disabled = waiting;
+  $('btnSchedule').disabled = waiting || isRecording();
+  $('navSchedule').disabled = waiting || isRecording();
+  if (!waiting) { if (!isRecording()) document.title = APP_TITLE; return; }
+  const left = (schedule.start - Date.now()) / 1000;
+  $('schWhen').textContent = `${fmtDay(schedule.start)} ${fmtHM(schedule.start)} ~ ${fmtHM(schedule.end)}`;
+  $('schLeft').textContent = left > 0 ? `시작까지 ${fmtClock(left)}` : '곧 시작해요';
+  document.title = `⏰ ${fmtHM(schedule.start)} 예약 · ${APP_TITLE}`;
+}
+$('btnSchedule').onclick = openSchedule;
+$('navSchedule').onclick = () => { go('home'); openSchedule(); };
+$('schOk').onclick = confirmSchedule;
+$('schClose').onclick = () => { $('schModal').hidden = true; };
+$('schModal').addEventListener('click', (e) => { if (e.target === $('schModal')) $('schModal').hidden = true; });
+$('schCancel').onclick = () => cancelSchedule();
+
+// 예약·녹화 중에는 화면이 꺼지거나 절전 모드로 가지 않게 요청 (탭이 화면에 보일 때만 적용돼요)
+let wake = null;
+async function requestWake() {
+  try { if ('wakeLock' in navigator && document.visibilityState === 'visible' && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch {}
+}
+function releaseWake() { try { if (wake) wake.release(); } catch {} wake = null; }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (schedule || isRecording())) requestWake(); });
+window.addEventListener('beforeunload', (e) => { if (schedule || isRecording()) { e.preventDefault(); e.returnValue = ''; } });
 $('doneNew').onclick = () => go('home');
 const pickFile = () => { if (!state.busy) $('fileIn').click(); };
 $('btnImport').onclick = pickFile; $('topImport').onclick = pickFile; $('navImport').onclick = pickFile;
@@ -785,9 +1059,10 @@ $('fileIn').onchange = async (e) => {
   go('sub');
 };
 
-async function loadVideo(blob, name, knownDuration, hasAudio, item) {
+async function loadVideo(blob, name, knownDuration, hasAudio, item, pcm) {
   if (state.url) URL.revokeObjectURL(state.url);
   state.blob = blob; state.name = name; state.url = URL.createObjectURL(blob); state.duration = knownDuration || 0;
+  state.pcm = item ? (item.pcm || null) : (pcm || null);
   state.cues = [];
   renderList();
   setStatus('subStatus', '영상은 내 컴퓨터 밖으로 나가지 않아요.');
@@ -807,7 +1082,7 @@ async function loadVideo(blob, name, knownDuration, hasAudio, item) {
     meta();
   } catch (err) { setStatus('subStatus', err.message, 'warn'); }
   if (item) state.item = item;
-  else await saveNewItem(blob, name, state.duration);
+  else await saveNewItem(blob, name, state.duration, state.pcm);
   updateNav();
 }
 
@@ -888,26 +1163,34 @@ async function makeSubtitles() {
   state.busy = true;
   $('btnSub').disabled = true; $('btnCancel').hidden = false; $('btnRec').disabled = true;
   updateNav();
-  setStatus('subStatus', '영상에서 소리를 꺼내는 중…');
-  let mono;
-  try {
-    const buf = await state.blob.arrayBuffer();
-    const ac = new AudioContext({ sampleRate: 16000 });
-    let audio;
-    try { audio = await ac.decodeAudioData(buf); } finally { ac.close(); }
-    mono = new Float32Array(audio.length);
-    for (let c = 0; c < audio.numberOfChannels; c++) {
-      const ch = audio.getChannelData(c);
-      for (let i = 0; i < ch.length; i++) mono[i] += ch[i] / audio.numberOfChannels;
+  const payload = { model: $('model').value, language: $('lang').value || null, force: forceOpts() };
+  let transfer = [];
+  if (state.pcm && state.pcm.length) {
+    // 녹화하면서 따로 받아 둔 소리를 그대로 사용 (긴 녹화도 빠르고 가볍게)
+    payload.pcm16 = state.pcm;
+  } else {
+    setStatus('subStatus', '영상에서 소리를 꺼내는 중…');
+    try {
+      const buf = await state.blob.arrayBuffer();
+      const ac = new AudioContext({ sampleRate: 16000 });
+      let audio;
+      try { audio = await ac.decodeAudioData(buf); } finally { ac.close(); }
+      const mono = new Float32Array(audio.length);
+      for (let c = 0; c < audio.numberOfChannels; c++) {
+        const ch = audio.getChannelData(c);
+        for (let i = 0; i < ch.length; i++) mono[i] += ch[i] / audio.numberOfChannels;
+      }
+      payload.audio = mono;
+      transfer = [mono.buffer];
+    } catch (err) {
+      return finishSub('영상에서 소리를 찾지 못했어요. 녹화할 때 "시스템 오디오 공유"를 켰는지 확인해 주세요.', 'warn');
     }
-  } catch (err) {
-    return finishSub('영상에서 소리를 찾지 못했어요. 녹화할 때 "시스템 오디오 공유"를 켰는지 확인해 주세요.', 'warn');
   }
   collected = []; dl.files = {};
   setCues([]);
   if (!worker) newWorker();
   preloaded = $('model').value;
-  worker.postMessage({ audio: mono, model: $('model').value, language: $('lang').value || null, force: forceOpts() }, [mono.buffer]);
+  worker.postMessage(payload, transfer);
 }
 $('btnSub').onclick = makeSubtitles;
 $('flRedo').onclick = makeSubtitles;
