@@ -5,13 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>녹화 자막 메이커</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<!-- 자막용 무료 한글 글꼴 (모두 SIL 오픈 폰트 라이선스, 상업적 이용 가능). 글자 파일은 쓸 때만 내려받아요. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&family=Nanum+Gothic:wght@800&family=Nanum+Myeongjo:wght@700&family=Gowun+Dodum&family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gaegu:wght@700&family=Nanum+Pen+Script&display=swap">
 <style>
   :root {
-    --side: #f8f8f6; --side-line: #e9e8e4; --side-hover: #eeede9; --side-active: #e6e5e0;
-    --ink: #1c1b19; --muted: #85837d; --faint: #b7b5ae;
-    --panel: #ffffff; --line: #ecebe7;
-    --dark: #19191b;
-    --orange: #e8742c; --orange-2: #f4a35a; --orange-soft: #fbe9dc;
+    /* 소프트 블루 팔레트: 막대 3색(#f4f7fc / #dbe6f4 / #b1c7e4) + 차분한 파랑 강조색 + 남색 글자 */
+    --blue-1: #f4f7fc; --blue-2: #dbe6f4; --blue-3: #b1c7e4;
+    --side: var(--blue-1); --side-line: #e1e9f4; --side-hover: #e9f0f9; --side-active: var(--blue-2);
+    --ink: #1d2b45; --muted: #6a7a94; --faint: #a9b6c9;
+    --panel: #ffffff; --line: #e3eaf3;
+    --dark: #23324f;
+    /* 예전 이름(orange)을 그대로 쓰는 곳이 많아서 이름은 두고 색만 파랑으로 바꿨어요 */
+    --orange: #3f74d0; --orange-2: #7ea4e6; --orange-soft: var(--blue-2);
     --rec: #ff4b3e; --ok: #2f9e6a; --ok-soft: #e2f4ea; --warn: #c46a12;
   }
   * { box-sizing: border-box; }
@@ -26,9 +33,28 @@
 
   /* ================= 왼쪽 사이드바 (Claude 스타일) ================= */
   .side {
-    width: 272px; flex: none; height: 100%; background: var(--side); border-right: 1px solid var(--side-line);
-    display: flex; flex-direction: column; padding: 10px 10px 0; z-index: 20;
+    width: var(--side-w, 272px); flex: none; height: 100%; background: var(--side); border-right: 1px solid var(--side-line);
+    display: flex; flex-direction: column; padding: 10px 10px 0; z-index: 20; position: relative; min-width: 0;
+    transition: width .18s ease;
   }
+  .side.dragging { transition: none; user-select: none; }
+  .side .nav .lbl, .side .recent .nm, .brand span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .side .nav .lbl { flex: 1; min-width: 0; }
+  /* 오른쪽 끝을 끌어서 너비 조절 */
+  .side-resizer { position: absolute; top: 0; right: -4px; width: 8px; height: 100%; cursor: col-resize; z-index: 6; }
+  .side-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; transition: background .15s; }
+  .side-resizer:hover::after, .side.dragging .side-resizer::after { background: var(--orange); }
+  /* 접힌 사이드바: 아이콘만 */
+  .side.compact { width: 60px; padding: 10px 8px 0; }
+  .side.compact .brand span, .side.compact .side-label, .side.compact .recent, .side.compact .nav .lbl,
+  .side.compact .nav .tag, .side.compact .side-foot > div:not(.avatar) { display: none; }
+  .side.compact .side-top { flex-direction: column; gap: 10px; padding: 2px 0 12px; }
+  .side.compact .brand { margin: 0; }
+  .side.compact .nav { margin-bottom: 10px; }
+  .side.compact .nav button { justify-content: center; padding: 9px 0; }
+  .side.compact .nav button:has(.tag.live)::after { content: ""; position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); transform: translate(10px, -9px); }
+  .side.compact .side-foot { justify-content: center; padding: 10px 0 12px; }
+  .side.compact #sideClose svg { transform: scaleX(-1); }
   .side-top { display: flex; align-items: center; gap: 4px; padding: 2px 4px 10px; }
   .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; margin-right: auto; }
   .brand i { width: 22px; height: 22px; border-radius: 7px; background: var(--dark); display: grid; place-items: center; }
@@ -59,7 +85,20 @@
   .recent .r.on { background: var(--side-active); }
   .recent .r .del { opacity: 0; width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; color: var(--muted); }
   .recent .r:hover .del, .recent .r.on .del { opacity: 1; }
-  .recent .r .del:hover { background: #dedcd6; color: var(--ink); }
+  .recent .r .del:hover, .recent .r .ren:hover { background: #dedcd6; color: var(--ink); }
+  .recent .r .ren { opacity: 0; width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; color: var(--muted); }
+  .recent .r:hover .ren { opacity: 1; }
+  .recent .r.on .nm { cursor: text; }
+  .inline-edit {
+    width: 100%; min-width: 0; font: inherit; color: var(--ink); background: #fff;
+    border: 1.5px solid var(--orange); border-radius: 6px; padding: 2px 6px; outline: none;
+  }
+  .file .editable { display: inline-block; max-width: 100%; cursor: text; border-radius: 5px; padding: 2px 5px; margin: -2px -5px; font-weight: 600; }
+  .file .editable:hover, .file .editable:focus-visible { background: #f4f2ee; outline: none; }
+  .file .editable:hover::after { content: " ✎"; color: var(--muted); font-weight: 400; }
+  .file .inline-edit { font-size: 13px; font-weight: 600; }
+  .file .editable:has(.inline-edit) { display: block; background: none; padding: 0; margin: 0 0 2px; }
+  .file .editable:has(.inline-edit)::after { content: none; }
   .recent .none { font-size: 13px; color: var(--faint); padding: 6px 10px; }
   .side-foot { border-top: 1px solid var(--side-line); padding: 10px 6px 12px; display: flex; align-items: center; gap: 10px; }
   .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--dark); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
@@ -67,13 +106,9 @@
   .side-foot small { color: var(--muted); font-size: 12px; }
 
   /* ================= 오른쪽 본문 ================= */
-  .main { flex: 1; position: relative; overflow: auto; }
-  .menu-btn { position: fixed; left: 14px; top: 14px; z-index: 30; display: none; background: rgba(255,255,255,.9); }
-  @media (max-width: 860px) {
-    .side { position: fixed; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform .25s ease; box-shadow: 0 0 40px rgba(0,0,0,.3); }
-    .side.open { transform: none; }
-    .menu-btn { display: grid; }
-  }
+  /* 본문은 남은 너비에 맞춰 줄어들어요. 아래 w-… 규칙은 창 크기가 아니라 '본문 너비' 기준이에요. */
+  .main { flex: 1; min-width: 0; position: relative; overflow: auto; }
+  .menu-btn { display: none !important; }
   .screen { display: none; position: relative; min-height: 100%; }
   .screen.on { display: block; animation: enter .4s ease; }
   @keyframes enter { from { opacity: 0; } to { opacity: 1; } }
@@ -159,29 +194,40 @@
   .chip { font-size: 12px; color: rgba(255,255,255,.8); border: 1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.18); border-radius: 99px; padding: 5px 11px; backdrop-filter: blur(4px); }
   .chip b { color: #fff; font-weight: 600; }
 
-  .thumbs { position: absolute; z-index: 2; right: 48px; bottom: 40px; display: flex; gap: 12px; }
-  .thumb {
-    width: 190px; height: 118px; border-radius: 10px; border: 0; cursor: pointer; position: relative; overflow: hidden; color: #fff;
-    text-align: left; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end; transition: transform .2s ease;
-    box-shadow: 0 12px 30px rgba(0,0,0,.35);
+  /* 최근 작업 5개 (첫 화면 아래) */
+  .strip { position: relative; z-index: 2; padding: 0 48px 28px; }
+  .strip-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; font-size: 12px; letter-spacing: .14em; color: rgba(255,255,255,.65); }
+  .strip-head small { letter-spacing: 0; color: rgba(255,255,255,.45); }
+  .strip-row { display: grid; grid-template-columns: repeat(5, minmax(0, 230px)); gap: 14px; }
+  /* 화면 높이가 낮아도 제목·버튼·최근 작업이 한 화면에 들어오게 */
+  .hero-body { padding-bottom: 24px; }
+  .headline { font-size: clamp(40px, min(6.2vw, 8.6vh), 86px); }
+  body:not(.recording) .rec-line:has(#recStatus:empty) { display: none; }
+  .chips { margin-top: 14px; }
+  .lead { margin: clamp(10px, 2.4vh, 22px) 0 clamp(14px, 3vh, 28px); }
+  .topbar { padding-top: clamp(14px, 3vh, 26px); padding-bottom: clamp(10px, 2vh, 26px); }
+  .rcard { border: 0; background: none; padding: 0; color: #fff; text-align: left; cursor: pointer; min-width: 0; }
+  .rthumb {
+    position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.08);
+    box-shadow: 0 12px 30px rgba(0,0,0,.35); transition: transform .2s ease, box-shadow .2s ease;
+    outline: 1px solid rgba(255,255,255,.12); outline-offset: -1px;
   }
-  .thumb:hover:not(:disabled) { transform: translateY(-4px); }
-  .thumb:disabled { cursor: default; }
-  .thumb::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,.55)); }
-  .thumb > * { position: relative; }
-  .thumb small { font-size: 11px; letter-spacing: .12em; opacity: .8; }
-  .thumb b { font-size: 15px; font-weight: 600; }
-  .thumb .st { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,.35); display: grid; place-items: center; }
-  .thumb.t2 { background: linear-gradient(135deg, #f6b06a, #c4501a 70%, #5a2310); }
-  .thumb.t3 { background: linear-gradient(135deg, #3b4258, #8a5236 60%, #e08a4a); }
-  .thumb.t4 { background: linear-gradient(135deg, #1f2026, #3b3a40 50%, #e8742c); }
-  .thumb:disabled { filter: saturate(.35) brightness(.7); }
+  .rthumb img, .rthumb video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .rthumb .noth { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.55); background: linear-gradient(135deg, #3b2a22, #1d1512); }
+  .rthumb .dur { position: absolute; right: 6px; bottom: 6px; font-size: 11px; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.65); padding: 1px 6px; border-radius: 4px; }
+  .rthumb .now { position: absolute; left: 6px; top: 6px; font-size: 10.5px; background: var(--orange); padding: 1px 7px; border-radius: 99px; font-weight: 600; }
+  .rcard:hover .rthumb, .rcard:focus-visible .rthumb { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(0,0,0,.45); outline-color: var(--orange-2); }
+  .rcard:focus-visible { outline: none; }
+  .rt { margin-top: 8px; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rd { margin-top: 1px; font-size: 12px; color: rgba(255,255,255,.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip-empty { grid-column: 1 / -1; padding: 22px 18px; border: 1px dashed rgba(255,255,255,.22); border-radius: 10px; font-size: 13.5px; color: rgba(255,255,255,.6); }
   .steps-rail { position: absolute; z-index: 2; right: 22px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 14px; align-items: flex-end; }
   .steps-rail span { font-size: 11px; color: rgba(255,255,255,.45); display: flex; align-items: center; gap: 8px; }
   .steps-rail span::after { content: ""; width: 14px; height: 1px; background: currentColor; }
   .steps-rail span.on { color: #fff; }
   .steps-rail span.on::after { width: 28px; }
-  @media (max-width: 1100px) { .thumbs { left: 48px; right: auto; } .hero-body { padding-bottom: 200px; } .thumb { width: 160px; } }
+  .main.w-1000 .strip-row { gap: 10px; }
+  .main.w-1000 .rt { font-size: 13px; }
 
   /* ================= 2·3·4단계 (패널 화면) ================= */
   .page { position: relative; z-index: 2; min-height: 100vh; padding: 56px 104px 48px 56px; display: flex; flex-direction: column; justify-content: center; }
@@ -190,13 +236,14 @@
     display: grid; gap: 32px; align-items: start;
   }
   .panel.sub { grid-template-columns: 200px minmax(0, 1fr) 280px; }
-  .panel.review { grid-template-columns: 200px minmax(0, 1fr) 340px; }
-  .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); gap: 0; }
-  @media (max-width: 1200px) {
-    .panel.sub, .panel.review { grid-template-columns: 1fr; }
-    .panel.done { grid-template-columns: 1fr; }
-    .page { padding: 56px 24px 32px; }
-  }
+  .panel.review { grid-template-columns: 190px minmax(0, 1fr) 300px; gap: 28px; }
+  .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); gap: 0; align-items: stretch; }
+  .panel.done .save-col .btn { margin-top: auto; }
+  .main.w-930 .panel.sub, .main.w-930 .panel.review { grid-template-columns: 1fr; }
+  .main.w-930 .panel.done { grid-template-columns: 1fr; }
+  .main.w-930 .page { padding: 56px 24px 32px; }
+  .main.w-930 .save-col { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; margin-top: 20px; min-height: 0; }
+  .main.w-930 .done .ttl { padding-right: 0; }
   .ttl h2 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
   .ttl .ko { margin: 6px 0 0; font-size: 15px; font-weight: 600; }
   .ttl .desc { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
@@ -207,16 +254,34 @@
   .stage { background: var(--dark); border-radius: 6px; min-height: 300px; padding: 12px; display: flex; align-items: center; justify-content: center; }
   .player { position: relative; display: inline-block; border-radius: 4px; overflow: hidden; line-height: 0; max-width: 100%; }
   .player video { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; background: #000; }
-  .cap { position: absolute; left: 5%; right: 5%; bottom: 19%; text-align: center; pointer-events: none; line-height: 1.45; }
+  /* 자막: 위치는 JS가 정해요 (가로 중앙 x, 아래쪽 끝 y를 영상 크기에 대한 비율로) */
+  .cap { position: absolute; left: 0; top: 0; width: max-content; max-width: 86%; text-align: center; pointer-events: none; line-height: 1.45; border-radius: 4px; }
   .cap span {
-    background: rgba(0,0,0,.62); color: #fff; padding: .08em .4em; border-radius: .2em; font-weight: 600;
-    white-space: pre-wrap; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+    background: rgba(0,0,0,.62); color: #fff; padding: .08em .4em; border-radius: .2em; font-weight: inherit;
+    white-space: pre-wrap; -webkit-box-decoration-break: clone; box-decoration-break: clone; outline: none;
   }
   .cap span:empty { display: none; }
+  .player.movable .cap span { pointer-events: auto; cursor: grab; touch-action: none; }
+  .player.movable .cap:hover { outline: 1.5px dashed rgba(255,255,255,.55); outline-offset: 4px; }
+  .player.movable .cap.sel { outline: 2px dashed var(--orange-2); outline-offset: 4px; }
+  .player.dragging .cap span { cursor: grabbing; }
+  .cap.ghost span { background: rgba(0,0,0,.35); color: rgba(255,255,255,.8); font-weight: 500; }
+  .guide-v { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-left: 1.5px dashed var(--orange-2); display: none; pointer-events: none; }
+  .player.snap-x .guide-v { display: block; }
+  .pos-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .pos-row .linkbtn { margin-left: auto; }
+  .pos-hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: -4px; }
+  .pos-hint kbd { font: inherit; font-size: 11px; background: #f1f0ec; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--ink); }
 
   .col-title { font-size: 11.5px; letter-spacing: .14em; color: var(--muted); padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
   .field { margin-bottom: 14px; }
   .field label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+  .model-hint { margin-top: 6px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .free-tag { font-size: 10.5px; color: var(--ok); background: var(--ok-soft); border-radius: 99px; padding: 1px 7px; margin-left: 4px; vertical-align: 1px; }
+  .font-preview {
+    margin-top: 8px; padding: 12px 10px; background: var(--dark); color: #fff; border-radius: 8px;
+    font-size: 17px; line-height: 1.35; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
   .field select {
     width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; background: #fafaf9;
     font: inherit; font-size: 14px; color: var(--ink); cursor: pointer;
@@ -255,6 +320,7 @@
   .done-foot { grid-column: 1 / -1; margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
   .done-foot .progress { flex: 1; min-width: 160px; margin: 0; }
   .done-foot .status { margin: 0; }
+  .done-foot .done-home { margin-left: auto; min-width: 140px; }
 
   .floaters { position: fixed; right: 26px; top: 50%; transform: translateY(-50%); z-index: 5; display: flex; flex-direction: column; gap: 12px; }
   .fl {
@@ -263,7 +329,7 @@
   }
   .fl:hover:not(:disabled) { transform: scale(1.06); }
   .fl:disabled { opacity: .4; cursor: not-allowed; }
-  @media (max-width: 1200px) { .floaters { display: none; } }
+  .main.w-930 .floaters { display: none; }
 
   .bottom-links { margin-top: 34px; display: flex; align-items: flex-end; gap: 36px; flex-wrap: wrap; }
   .big-link {
@@ -272,6 +338,7 @@
   }
   .big-link:hover:not(:disabled) { color: #fff; }
   .big-link:disabled { color: rgba(255,255,255,.3); cursor: default; }
+  .bottom-links.top { margin: 0 0 28px; }
   .small-link { border: 0; background: none; color: rgba(255,255,255,.6); cursor: pointer; font-size: 14px; padding: 0 0 6px; }
   .small-link:hover { color: #fff; }
   .nav button .tag.live { color: var(--orange); font-weight: 600; }
@@ -308,19 +375,110 @@
 
   /* 좁은 화면 (휴대폰·작은 창) */
   .logo, .pill-btn { white-space: nowrap; }
-  @media (max-width: 760px) {
-    .topbar { padding: 18px 16px 10px 64px; gap: 12px; }
-    .links { display: none; }
-    .topbar .pill-btn { margin-left: auto; }
-    .hero-body { padding: 24px 20px 28px; max-width: none; }
-    .thumbs { position: static; padding: 0 20px 28px; flex-wrap: wrap; }
-    .thumb { width: calc(50% - 6px); height: 96px; }
-    .steps-rail { display: none; }
-    .page { padding: 64px 16px 28px; }
-    .panel { padding: 24px 20px; }
-    .save-col { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; margin-top: 20px; min-height: 0; }
-    .big-link { font-size: 24px; }
+  .main.w-680 .topbar { padding: 18px 16px 10px 20px; gap: 12px; }
+  .main.w-680 .links { display: none; }
+  .main.w-680 .topbar .pill-btn { margin-left: auto; }
+  .main.w-680 .hero-body { padding: 24px 20px 28px; max-width: none; }
+  .main.w-680 .headline { font-size: 52px; }
+  .main.w-460 .headline { font-size: 40px; }
+  .side .nav button { position: relative; }
+  .main.w-680 .strip { position: static; padding: 0 20px 28px; }
+  .main.w-680 .strip-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 46%; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+  .main.w-680 .steps-rail { display: none; }
+  .main.w-680 .page { padding: 48px 14px 28px; }
+  .main.w-680 .panel { padding: 24px 18px; }
+  .main.w-680 .big-link { font-size: 24px; }
+  .main.w-680 .notice { margin: 16px 20px 0; }
+
+  /* ================= 소프트 블루 테마 (색만 바꿔요. 배치는 위 규칙 그대로) ================= */
+  body { background: #e9f1fb; }
+  .ibtn { color: #4a5a75; }
+  .side .nav button { color: #23324f; }
+  .recent .r .del:hover, .recent .r .ren:hover { background: #d3dff0; }
+  .file .editable:hover, .file .editable:focus-visible { background: #eef3fa; }
+
+  /* 하늘 배경: 밝은 하늘 + 부드러운 빛 곡선 + 아래쪽 구름 */
+  .scene .sky {
+    background:
+      radial-gradient(60% 55% at 88% 22%, rgba(255,255,255,.6), transparent 70%),
+      radial-gradient(40% 35% at 12% 18%, rgba(255,255,255,.35), transparent 70%),
+      linear-gradient(180deg, #c6daf4 0%, #d3e3f7 42%, #e2ecf9 72%, #eef4fc 100%);
   }
+  .scene .sky::before, .scene .sky::after {
+    content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,255,255,.38), rgba(255,255,255,0));
+  }
+  .scene .sky::before { width: 120%; height: 90%; left: -55%; top: 10%; transform: rotate(-12deg); }
+  .scene .sky::after { width: 90%; height: 80%; right: -35%; top: -5%; transform: rotate(18deg); }
+  .scene .stars, .scene .grain { display: none; }
+  .scene .orb { background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,.55) 32%, rgba(255,255,255,0) 70%); filter: blur(4px); }
+  .scene .orb::after { background: radial-gradient(circle, rgba(255,255,255,.35), transparent 60%); }
+  .recording .scene .orb { background: radial-gradient(circle, #ffd6d0 0%, #ff7a6c 30%, rgba(255,75,62,.45) 52%, transparent 72%); }
+  .scene .clouds { position: absolute; left: -3%; width: 106%; bottom: -40px; height: 48%; filter: blur(9px); }
+  .scene.blur .sky, .scene.blur .orb, .scene.blur .clouds { filter: blur(24px); }
+  .scene.blur::after { background: rgba(238, 244, 252, .28); }
+
+  /* 첫 화면 글자·버튼 */
+  .logo { color: var(--ink); }
+  .logo i { background: var(--orange); box-shadow: 0 0 12px rgba(63,116,208,.55); }
+  .links button { color: #33496f; }
+  .links button:hover:not(:disabled) { color: var(--ink); }
+  .links button:disabled { color: rgba(51,73,111,.35); }
+  .pill-btn { background: var(--orange); border-color: var(--orange); color: #fff; backdrop-filter: none; box-shadow: 0 6px 16px rgba(63,116,208,.25); }
+  .pill-btn:hover { background: #3366c2; }
+  .eyebrow { color: #5f7598; }
+  .headline { color: #1b2a4a; }
+  .headline em { background: linear-gradient(90deg, #4f86e0, #3a6cc8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { color: #3f5274; }
+  .btn.orange { background: linear-gradient(135deg, #5b8fe2, #3d71cf); color: #fff; box-shadow: 0 8px 20px rgba(61,113,207,.25); }
+  .btn.ghost { color: #3d71cf; background: rgba(255,255,255,.4); box-shadow: inset 0 0 0 1.5px #3d71cf; }
+  .btn.ghost:hover { background: rgba(255,255,255,.7); }
+  .rec-line { color: #3f5274; }
+  .timer { color: var(--ink); }
+  .chip { color: #33496f; border-color: rgba(63,116,208,.18); background: rgba(255,255,255,.55); }
+  .chip b { color: var(--ink); }
+  .steps-rail span { color: rgba(29,43,69,.38); }
+  .steps-rail span.on { color: var(--ink); }
+
+  /* 최근 작업 */
+  .strip-head { color: #4d6288; }
+  .strip-head small { color: #7a8aa6; }
+  .rthumb { background: rgba(255,255,255,.5); box-shadow: 0 10px 24px rgba(40,80,150,.14); outline-color: rgba(63,116,208,.15); }
+  .rthumb .noth { color: #6a86b5; background: linear-gradient(135deg, #e7eff9, var(--blue-3)); }
+  .rcard { color: var(--ink); }
+  .rcard:hover .rthumb, .rcard:focus-visible .rthumb { box-shadow: 0 14px 30px rgba(40,80,150,.22); outline-color: var(--orange); }
+  .rt { color: var(--ink); }
+  .rd { color: var(--muted); }
+  .strip-empty { border-color: rgba(63,116,208,.3); color: #4d6288; background: rgba(255,255,255,.35); }
+
+  /* 예약 대기 카드 */
+  .sch-card { background: rgba(255,255,255,.62); border-color: rgba(63,116,208,.2); color: var(--ink); }
+  .sch-ic { background: rgba(63,116,208,.12); color: var(--orange); animation-name: breatheBlue; }
+  @keyframes breatheBlue { 50% { background: rgba(63,116,208,.24); } }
+  .sch-txt small { color: #5f7598; }
+  .sch-txt span { color: var(--orange); }
+
+  /* 2·3·4단계 패널 화면 */
+  .panel { box-shadow: 0 20px 60px rgba(40,80,150,.16); }
+  .stage { background: #1f2c45; }
+  .field select, .field input[type=date], .field input[type=time] { background: #f7f9fd; }
+  .progress { background: var(--line); }
+  .cue.active { background: #eef4fc; }
+  .times input { background: #f1f5fb; }
+  .pos-hint kbd { background: #eef3fa; }
+  .art.a1 { background: linear-gradient(135deg, #a9c4ee, #4f86e0 60%, #2c4f8f); }
+  .art.a2 { background: repeating-linear-gradient(180deg, #f1f5fb 0 14px, #fff 14px 28px); }
+  .art.a3 { background: linear-gradient(135deg, #2a3b5c, #445a85); }
+  .fl { box-shadow: 0 10px 26px rgba(40,80,150,.2); }
+  .big-link { color: var(--ink); }
+  .big-link:hover:not(:disabled) { color: var(--orange); }
+  .big-link:disabled { color: rgba(29,43,69,.3); }
+  .small-link { color: #4d6288; }
+  .small-link:hover { color: var(--ink); }
+  .modal { background: rgba(30, 50, 90, .3); }
+  .modal-card { box-shadow: 0 30px 80px rgba(30,60,120,.25); }
+  .howto { background: #f1f5fb; color: #4a5a75; }
+  .notice { background: #e3ecf9; color: #234a8a; }
 
   .notice { position: relative; z-index: 3; margin: 16px 48px 0; background: #fff3ea; color: #8a3f0f; border-radius: 10px; padding: 12px 14px; font-size: 13.5px; }
 </style>
@@ -330,20 +488,20 @@
 <!-- ================= 사이드바 ================= -->
 <aside class="side" id="side">
   <div class="side-top">
-    <div class="brand"><i></i>녹화 자막 메이커</div>
-    <button class="ibtn" id="sideClose" title="사이드바 닫기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
+    <div class="brand"><i></i><span>녹화 자막 메이커</span></div>
+    <button class="ibtn" id="sideClose" title="사이드바 접기/펴기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
   </div>
   <nav class="nav">
-    <button id="navNew"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>새로 녹화</button>
-    <button id="navImport"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>영상 불러오기</button>
-    <button id="navSchedule"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M5 4L2.5 6.5M19 4l2.5 2.5"/></svg>예약 녹화</button>
+    <button id="navNew"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">새로 녹화</span></button>
+    <button id="navImport"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="lbl">영상 불러오기</span></button>
+    <button id="navSchedule"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M5 4L2.5 6.5M19 4l2.5 2.5"/></svg><span class="lbl">예약 녹화</span></button>
   </nav>
   <div class="side-label" style="cursor:default">작업 단계</div>
   <nav class="nav" id="stepNav">
-    <button data-go="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>화면 녹화<span class="tag"></span></button>
-    <button data-go="sub"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 10.5a2 2 0 1 0 0 3M16 10.5a2 2 0 1 0 0 3"/></svg>자막 만들기<span class="tag"></span></button>
-    <button data-go="review"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg>최종 검토<span class="tag"></span></button>
-    <button data-go="done"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>저장하기<span class="tag"></span></button>
+    <button data-go="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span class="lbl">화면 녹화</span><span class="tag"></span></button>
+    <button data-go="sub"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 10.5a2 2 0 1 0 0 3M16 10.5a2 2 0 1 0 0 3"/></svg><span class="lbl">자막 만들기</span><span class="tag"></span></button>
+    <button data-go="review"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg><span class="lbl">최종 검토</span><span class="tag"></span></button>
+    <button data-go="done"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="lbl">저장하기</span><span class="tag"></span></button>
   </nav>
   <button class="side-label" id="recentToggle">최근 항목 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
   <div class="recent" id="recent"></div>
@@ -351,6 +509,7 @@
     <div class="avatar">녹</div>
     <div><b>내 컴퓨터</b><small>영상은 밖으로 나가지 않아요</small></div>
   </div>
+  <div class="side-resizer" id="sideResizer" title="끌어서 너비 조절 · 두 번 누르면 접기/펴기"></div>
 </aside>
 
 <main class="main" id="main">
@@ -361,7 +520,7 @@
     <div class="hero">
       <div class="scene">
         <div class="sky"></div><div class="stars"></div><div class="orb"></div>
-        <svg class="hills" viewBox="0 0 1440 400" preserveAspectRatio="none"><path d="M0 250 C 180 170 320 210 470 180 S 760 110 900 170 S 1200 240 1440 160 L1440 400 L0 400Z" fill="#2a140b" opacity=".75"/><path d="M0 320 C 220 250 380 300 560 260 S 900 220 1080 280 S 1320 300 1440 260 L1440 400 L0 400Z" fill="#140905"/></svg>
+        <svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="330" cy="290" rx="190" ry="80"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="1080" cy="290" rx="200" ry="75"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="260" cy="365" rx="220" ry="90"/><ellipse cx="520" cy="392" rx="260" ry="80"/><ellipse cx="820" cy="398" rx="300" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/><circle cx="170" cy="282" r="70"/><circle cx="1330" cy="248" r="88"/><circle cx="1200" cy="300" r="60"/><circle cx="395" cy="320" r="55"/></g></svg>
         <div class="grain"></div>
       </div>
       <div class="topbar">
@@ -394,10 +553,9 @@
           <span class="chip"><b>시스템 오디오 공유</b>를 켜면 소리도 녹음돼요</span>
         </div>
       </div>
-      <div class="thumbs">
-        <button class="thumb t2" data-go="sub"><span class="st"></span><small>02</small><b>자막 만들기</b></button>
-        <button class="thumb t3" data-go="review"><span class="st"></span><small>03</small><b>최종 검토</b></button>
-        <button class="thumb t4" data-go="done"><span class="st"></span><small>04</small><b>저장하기</b></button>
+      <div class="strip">
+        <div class="strip-head"><span>최근 작업</span><small id="stripCount"></small></div>
+        <div class="strip-row" id="recentStrip"></div>
       </div>
       <div class="steps-rail"><span class="on">01</span><span>02</span><span>03</span><span>04</span></div>
     </div>
@@ -405,7 +563,7 @@
 
   <!-- ================= 2. 자막 만들기 ================= -->
   <section class="screen" id="scr-sub">
-    <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="hills" viewBox="0 0 1440 400" preserveAspectRatio="none"><path d="M0 320 C 220 250 380 300 560 260 S 900 220 1080 280 S 1320 300 1440 260 L1440 400 L0 400Z" fill="#140905"/></svg></div>
+    <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
       <div class="panel sub">
         <div class="ttl">
@@ -413,7 +571,7 @@
           <p class="ko">자막 만들기</p>
           <p class="desc">영상 속 말을 AI가 받아 적어요. 처음 한 번은 AI 모델을 내려받아요.</p>
           <div class="stepno">STEP 02 / 04</div>
-          <div class="file"><span id="vidName">영상</span><small id="vidMeta"></small></div>
+          <div class="file"><span id="vidName" class="editable" role="button" tabindex="0" title="눌러서 이름 바꾸기">영상</span><small id="vidMeta"></small></div>
         </div>
         <div class="stage" id="slotSub"></div>
         <div>
@@ -427,12 +585,17 @@
               <option value="">자동 감지</option>
             </select>
           </div>
+          <div class="field"><label for="capFont">글꼴 <span class="free-tag">무료 글꼴</span></label>
+            <select id="capFont"></select>
+            <div class="font-preview" id="fontPreview">안녕하세요, 자막 글꼴 미리보기예요</div>
+          </div>
           <div class="field"><label for="model">정확도</label>
             <select id="model">
+              <option value="onnx-community/whisper-large-v3-turbo" selected>가장 정확 (추천) · 약 730MB</option>
+              <option value="onnx-community/whisper-small">보통 · 약 560MB</option>
               <option value="onnx-community/whisper-base">빠름 · 약 200MB</option>
-              <option value="onnx-community/whisper-small" selected>보통 · 약 560MB</option>
-              <option value="onnx-community/whisper-large-v3-turbo">가장 정확 · 약 600MB</option>
             </select>
+            <div class="model-hint" id="modelHint"></div>
           </div>
           <button id="btnSub" class="btn dark wide">자막 만들기</button>
           <div id="bar" class="progress"><i></i></div>
@@ -453,16 +616,18 @@
 
   <!-- ================= 3. 최종 검토 ================= -->
   <section class="screen" id="scr-review">
-    <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="hills" viewBox="0 0 1440 400" preserveAspectRatio="none"><path d="M0 320 C 220 250 380 300 560 260 S 900 220 1080 280 S 1320 300 1440 260 L1440 400 L0 400Z" fill="#140905"/></svg></div>
+    <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
       <div class="panel review">
         <div class="ttl">
           <h2>Review</h2>
           <p class="ko">최종 검토 · 확인하고 고치기</p>
-          <p class="desc">재생하며 자막을 확인하고, 글자와 시간을 바로 고치세요. 자막 글자를 누르면 그 위치로 이동해요.</p>
+          <p class="desc">재생하며 자막을 확인하고, 글자와 시간을 바로 고치세요. 오른쪽 목록의 자막 글자를 누르면 그 시간으로 이동해요.</p>
           <div class="stepno">STEP 03 / 04</div>
           <div class="tools">
             <label>자막 크기<input id="capSize" type="range" min="3" max="9" step="0.5" value="5.5"></label>
+            <div class="pos-row">자막 위치<button class="linkbtn" id="btnCapReset">위치 초기화</button></div>
+            <div class="pos-hint">영상 속 자막을 <b>끌어서</b> 옮기거나, 자막을 누른 뒤 <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>로 옮겨요. <kbd>Shift</kbd>를 같이 누르면 크게 움직여요.</div>
             <button id="btnAdd" class="btn light wide">+ 현재 위치에 자막 추가</button>
             <button id="btnFinish" class="btn dark wide">편집 완료</button>
           </div>
@@ -486,8 +651,12 @@
 
   <!-- ================= 4. 완료 + 저장 ================= -->
   <section class="screen" id="scr-done">
-    <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="hills" viewBox="0 0 1440 400" preserveAspectRatio="none"><path d="M0 320 C 220 250 380 300 560 260 S 900 220 1080 280 S 1320 300 1440 260 L1440 400 L0 400Z" fill="#140905"/></svg></div>
+    <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
+      <div class="bottom-links top">
+        <button class="big-link" id="doneNew"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>새로 녹화하기</button>
+        <button class="small-link" data-go="review">← 다시 고치기</button>
+      </div>
       <div class="panel done">
         <div class="ttl">
           <div class="check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
@@ -520,11 +689,8 @@
         <div class="done-foot">
           <div id="burnBar" class="progress"><i></i></div>
           <div id="saveStatus" class="status">자막 입힌 영상을 저장하는 동안에는 이 창을 띄워 두세요.</div>
+          <button id="btnDoneHome" class="btn dark done-home">완료</button>
         </div>
-      </div>
-      <div class="bottom-links">
-        <button class="big-link" id="doneNew"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>새로 녹화하기</button>
-        <button class="small-link" data-go="review">← 다시 고치기</button>
       </div>
     </div>
   </section>
@@ -532,7 +698,8 @@
   <!-- 2·3단계 화면 사이를 오가는 영상 플레이어 -->
   <div id="playerBox" class="player" hidden>
     <video id="preview" controls playsinline></video>
-    <div class="cap"><span id="capText"></span></div>
+    <div class="guide-v"></div>
+    <div class="cap"><span id="capText" tabindex="0" aria-label="자막 위치 (끌거나 방향키로 옮기기)"></span></div>
   </div>
   <input id="fileIn" type="file" accept="video/*,audio/*" hidden>
 
@@ -576,6 +743,8 @@ const ICON = {
   next: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
   check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   x: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  film: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>',
+  pen: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg>',
 };
 
 // ---------- 공통 유틸 ----------
@@ -680,43 +849,221 @@ const MAX_RECENT = 12;
 async function loadRecents() {
   try {
     const all = await DB.all();
-    recents = all.map(({ id, name, created }) => ({ id, name, created })).sort((a, b) => b.created - a.created);
+    recents = all.map(({ id, name, created, updated, duration, thumb }) => ({ id, name, created, updated: updated || created, duration, thumb }));
+    sortRecents();
   } catch { recents = []; }
   renderRecents();
 }
+const sortRecents = () => recents.sort((a, b) => b.updated - a.updated); // 마지막으로 작업한 순서
+function touchRecent(item) {
+  const r = recents.find((x) => x.id === item.id);
+  if (r) { r.name = item.name; r.updated = item.updated; r.duration = item.duration; if (item.thumb !== undefined) r.thumb = item.thumb; }
+  sortRecents();
+}
+
+// ---------- 첫 화면 '최근 작업' 5개 ----------
+function fmtWhen(ts) {
+  const d = new Date(ts), now = new Date();
+  const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(now) - day(d)) / 86400000);
+  const time = d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+  if (diff === 0) return `오늘 ${time}`;
+  if (diff === 1) return `어제 ${time}`;
+  const date = d.getFullYear() === now.getFullYear() ? `${d.getMonth() + 1}월 ${d.getDate()}일` : `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
+  return `${date} ${time}`;
+}
+let stripSig = '';
+function renderStrip() {
+  const list = recents.slice(0, 5);
+  const sig = JSON.stringify([list.map((r) => [r.id, r.name, r.updated, r.duration, r.thumb ? r.thumb.length : r.thumb]), state.item && state.item.id, recents.length]);
+  if (sig === stripSig) return; // 바뀐 게 없으면 다시 그리지 않아요 (미리보기 재생이 끊기지 않게)
+  stripSig = sig;
+  const box = $('recentStrip');
+  $('stripCount').textContent = recents.length ? `전체 ${recents.length}개` : '';
+  if (!list.length) {
+    box.innerHTML = '<div class="strip-empty">아직 작업이 없어요. 녹화를 시작하거나 영상을 불러오면 여기에 나와요.</div>';
+    return;
+  }
+  box.innerHTML = '';
+  for (const r of list) {
+    const card = document.createElement('button');
+    card.className = 'rcard';
+    card.title = `${stripExt(r.name)} 열기`;
+    card.innerHTML = `<div class="rthumb">${r.thumb ? '<img alt="">' : `<span class="noth">${ICON.film}</span>`}${r.duration ? '<span class="dur"></span>' : ''}${state.item && state.item.id === r.id ? '<span class="now">작업 중</span>' : ''}</div><div class="rt"></div><div class="rd"></div>`;
+    if (r.thumb) card.querySelector('img').src = r.thumb;
+    if (r.duration) card.querySelector('.dur').textContent = fmtClock(r.duration);
+    card.querySelector('.rt').textContent = stripExt(r.name);
+    card.querySelector('.rd').textContent = fmtWhen(r.updated);
+    card.onclick = () => openItem(r.id);
+    if (r.thumb) addHoverPreview(card, r.id);
+    box.appendChild(card);
+  }
+  ensureThumbs(list);
+}
+// 마우스를 올리면 소리 없이 짧게 재생돼요
+function addHoverPreview(card, id) {
+  let v = null, url = '', alive = false;
+  card.addEventListener('mouseenter', async () => {
+    alive = true;
+    let it; try { it = await DB.get(id); } catch {}
+    if (!alive || !it || !it.blob) return;
+    url = URL.createObjectURL(it.blob);
+    v = document.createElement('video');
+    v.muted = true; v.loop = true; v.playsInline = true; v.src = url;
+    card.querySelector('.rthumb').insertBefore(v, card.querySelector('.rthumb').children[1] || null);
+    v.play().catch(() => {});
+  });
+  card.addEventListener('mouseleave', () => {
+    alive = false;
+    if (v) { v.pause(); v.remove(); v = null; }
+    if (url) { URL.revokeObjectURL(url); url = ''; }
+  });
+}
+// 영상에서 한 장면을 뽑아 작은 그림(썸네일)을 만들어요
+async function makeThumb(blob) {
+  const v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.preload = 'auto';
+  const url = URL.createObjectURL(blob);
+  v.src = url;
+  try {
+    await whenMeta(v);
+    if (!v.videoWidth) return '';
+    const d = (await ensureDuration(v)) || 0;
+    v.currentTime = Math.min(Math.max(d * 0.1, 0.3), Math.max(0, d - 0.1));
+    await new Promise((r) => { v.onseeked = r; setTimeout(r, 3000); });
+    const c = document.createElement('canvas');
+    c.width = 320; c.height = Math.round(320 * v.videoHeight / v.videoWidth);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.75);
+  } catch { return ''; } finally { v.removeAttribute('src'); v.load(); URL.revokeObjectURL(url); }
+}
+const thumbPending = new Set();
+function ensureThumbs(list) {
+  for (const r of list) {
+    if (r.thumb !== undefined || thumbPending.has(r.id)) continue;
+    thumbPending.add(r.id);
+    (async () => {
+      try {
+        const cur = state.item && state.item.id === r.id ? state.item : await DB.get(r.id);
+        if (!cur || !cur.blob) return;
+        cur.thumb = await makeThumb(cur.blob);
+        r.thumb = cur.thumb;
+        await DB.put(cur);
+      } catch {} finally { thumbPending.delete(r.id); renderStrip(); }
+    })();
+  }
+}
+const stripExt = (n) => n.replace(/\.[^.]+$/, '');
+let editingName = false;
 function renderRecents() {
+  renderStrip();
+  if (editingName) return; // 이름을 고치는 중에는 목록을 다시 그리지 않아요
   const box = $('recent');
   if (!recents.length) { box.innerHTML = '<div class="none">아직 작업이 없어요.</div>'; return; }
   box.innerHTML = '';
   for (const r of recents) {
     const el = document.createElement('div');
-    el.className = 'r' + (state.item && state.item.id === r.id ? ' on' : '');
-    el.title = new Date(r.created).toLocaleString('ko-KR');
-    el.innerHTML = `<span></span><button class="del ibtn" title="지우기">${ICON.x}</button>`;
-    el.firstElementChild.textContent = r.name.replace(/\.[^.]+$/, '');
-    el.onclick = (e) => { if (!e.target.closest('.del')) openItem(r.id); };
+    const active = !!(state.item && state.item.id === r.id);
+    el.className = 'r' + (active ? ' on' : '');
+    el.title = (active ? '눌러서 이름 바꾸기 · ' : '') + '마지막 작업 ' + fmtWhen(r.updated);
+    el.innerHTML = `<span class="nm"></span><button class="ren ibtn" title="이름 바꾸기">${ICON.pen}</button><button class="del ibtn" title="지우기">${ICON.x}</button>`;
+    el.querySelector('.nm').textContent = stripExt(r.name);
+    el.onclick = (e) => {
+      if (e.target.closest('.del') || e.target.closest('.inline-edit')) return;
+      // 열려 있는 작업의 이름을 누르거나 연필을 누르면 바로 이름 바꾸기, 다른 작업을 누르면 열기
+      if (e.target.closest('.ren') || active) editRecentName(el, r);
+      else openItem(r.id);
+    };
     el.querySelector('.del').onclick = () => removeItem(r.id);
     box.appendChild(el);
   }
 }
+function editRecentName(el, r) {
+  startInlineEdit(el.querySelector('.nm'), stripExt(r.name), (v) => renameItem(r.id, v), () => renderRecents());
+}
+
+// 제목을 그 자리에서 바로 고치는 입력칸
+function startInlineEdit(host, value, commit, onEnd) {
+  if (editingName) return;
+  editingName = true;
+  const inp = document.createElement('input');
+  inp.className = 'inline-edit'; inp.value = value; inp.maxLength = 80; inp.spellcheck = false;
+  host.textContent = '';
+  host.appendChild(inp);
+  inp.focus(); inp.select();
+  let done = false;
+  const finish = async (save) => {
+    if (done) return;
+    done = true;
+    const v = inp.value.trim();
+    if (save && v && v !== value) await commit(v);
+    editingName = false;
+    onEnd();
+  };
+  inp.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+  });
+  inp.addEventListener('blur', () => finish(true));
+  inp.addEventListener('click', (e) => e.stopPropagation());
+}
+async function renameItem(id, base) {
+  base = base.replace(/[\\/:*?"<>|]/g, '').trim(); // 파일 이름에 못 쓰는 글자 빼기
+  if (!base) return;
+  const extOfName = (n) => (n.match(/\.[^.]+$/) || [''])[0];
+  let name;
+  let target;
+  if (state.item && state.item.id === id) {
+    name = base + extOfName(state.name);
+    state.name = name;
+    target = state.item;
+  } else {
+    try { target = await DB.get(id); } catch {}
+    if (!target) return;
+    name = base + extOfName(target.name);
+  }
+  target.name = name;
+  target.updated = Date.now();
+  try { await DB.put(target); } catch {}
+  touchRecent(target);
+  renderStrip();
+  if (state.item && state.item.id === id) $('vidName').textContent = name;
+}
+function editCurrentTitle() {
+  if (!state.blob) return;
+  const host = $('vidName');
+  startInlineEdit(host, stripExt(state.name), async (v) => {
+    if (state.item) await renameItem(state.item.id, v);
+    else { const b = v.replace(/[\\/:*?"<>|]/g, '').trim(); if (b) state.name = b + ((state.name.match(/\.[^.]+$/) || [''])[0]); }
+  }, () => { host.textContent = state.name; renderRecents(); });
+}
 async function saveNewItem(blob, name, duration, pcm) {
-  const item = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), name, created: Date.now(), duration, blob, pcm: pcm || null, cues: [] };
+  const now = Date.now();
+  const item = { id: (crypto.randomUUID ? crypto.randomUUID() : String(now)), name, created: now, updated: now, duration, blob, pcm: pcm || null, cues: [] };
   state.item = item;
-  recents.unshift({ id: item.id, name, created: item.created });
+  recents.unshift({ id: item.id, name, created: now, updated: now, duration });
   try {
     await DB.put(item);
     while (recents.length > MAX_RECENT) { const old = recents.pop(); await DB.del(old.id); }
   } catch {}
-  renderRecents();
+  renderRecents(); // 썸네일은 renderStrip → ensureThumbs가 따로 만들어요
 }
 let saveTimer = 0;
+let skipBump = null; // 작업을 '열기만' 했을 때는 마지막 작업 시간을 바꾸지 않아요
 function scheduleSave() {
   if (!state.item) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    if (!state.item) return; // 그 사이에 작업이 지워졌으면 저장하지 않아요
     state.item.cues = state.cues.map(({ start, end, text }) => ({ start, end, text }));
     state.item.duration = state.duration;
+    state.item.style = { x: state.capPos.x, y: state.capPos.y, size: Number($('capSize').value), font: state.capFont };
+    if (skipBump === state.item.id) skipBump = null;
+    else state.item.updated = Date.now();
     DB.put(state.item).catch(() => {});
+    touchRecent(state.item);
+    renderRecents();
   }, 500);
 }
 async function openItem(id) {
@@ -725,6 +1072,7 @@ async function openItem(id) {
   try { it = await DB.get(id); } catch {}
   if (!it) return;
   closeSide();
+  skipBump = it.id;
   await loadVideo(it.blob, it.name, it.duration, null, it);
   setCues(it.cues || []);
   go(state.cues.length ? 'review' : 'sub');
@@ -755,10 +1103,11 @@ function go(name) {
     $('preview').pause();
   }
   state.screen = name;
+  $('playerBox').classList.toggle('movable', name === 'review');
   updateNav();
   $('main').scrollTo({ top: 0 });
   closeSide();
-  requestAnimationFrame(sizeCaption);
+  requestAnimationFrame(() => { sizeCaption(); updateCaption(); });
 }
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-go]');
@@ -783,25 +1132,68 @@ function updateNav() {
     tag.classList.toggle('ok', k === 'sub' && n > 0);
     tag.classList.toggle('live', k === 'home' && !!tags.home);
   });
-  document.querySelectorAll('.links button, .thumb').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
-  document.querySelectorAll('.thumb').forEach((t) => {
-    const k = t.dataset.go;
-    t.querySelector('.st').innerHTML = !canGo(k) ? ICON.lock : (k === 'sub' && n) ? ICON.check : ICON.next;
-  });
+  document.querySelectorAll('.links button').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
   $('subNext').disabled = !n || state.busy;
   $('flRedo').disabled = !state.blob || state.busy;
   ['btnSrt', 'btnBurn'].forEach((id) => ($(id).disabled = !n || state.busy));
   renderRecents();
 }
-function closeSide() { $('side').classList.remove('open'); }
-$('menuBtn').onclick = () => $('side').classList.toggle('open');
-$('sideClose').onclick = () => {
-  if (window.matchMedia('(max-width: 860px)').matches) closeSide();
-  else { $('side').hidden = true; $('menuBtn').style.display = 'grid'; }
-};
-$('menuBtn').addEventListener('click', () => {
-  if ($('side').hidden) { $('side').hidden = false; $('menuBtn').style.display = ''; $('side').classList.remove('open'); }
+function closeSide() {} // 사이드바는 항상 옆에 붙어 있어요 (예전 '떠 있는 메뉴' 방식은 없앴어요)
+
+// ---------- 사이드바 너비 조절 / 접기 ----------
+const SIDE_MIN = 200, SIDE_MAX = 400, SIDE_FOLD = 150, NARROW = 720;
+const sideW = (v) => Math.min(SIDE_MAX, Math.max(SIDE_MIN, v));
+const sideState = { w: 272, compact: false };
+try { const s = JSON.parse(localStorage.getItem('rc-side') || '{}'); if (s.w) sideState.w = sideW(s.w); if (s.compact) sideState.compact = true; } catch {}
+const saveSide = () => { try { localStorage.setItem('rc-side', JSON.stringify(sideState)); } catch {} };
+let autoFolded = false; // 창이 좁아서 자동으로 접은 상태
+function applySide() {
+  $('side').style.setProperty('--side-w', sideState.w + 'px');
+  $('side').classList.toggle('compact', sideState.compact || autoFolded);
+  $('sideClose').title = $('side').classList.contains('compact') ? '사이드바 펴기' : '사이드바 접기';
+}
+function toggleSide() {
+  if ($('side').classList.contains('compact')) { sideState.compact = false; autoFolded = false; }
+  else sideState.compact = true;
+  applySide(); saveSide();
+}
+$('sideClose').onclick = toggleSide;
+// 접혀 있을 때 아이콘에 마우스를 올리면 이름이 보이게
+document.querySelectorAll('.side .nav button').forEach((b) => { const l = b.querySelector('.lbl'); if (l && !b.title) b.title = l.textContent; });
+// 오른쪽 끝을 끌어서 너비 조절, 많이 줄이면 아이콘만 남게 접혀요
+let sideDrag = null;
+$('sideResizer').addEventListener('pointerdown', (e) => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  sideDrag = { id: e.pointerId, left: $('side').getBoundingClientRect().left };
+  $('sideResizer').setPointerCapture(e.pointerId);
+  $('side').classList.add('dragging');
 });
+$('sideResizer').addEventListener('pointermove', (e) => {
+  if (!sideDrag || e.pointerId !== sideDrag.id) return;
+  const w = e.clientX - sideDrag.left;
+  if (w < SIDE_FOLD) { sideState.compact = true; }
+  else { sideState.compact = false; autoFolded = false; sideState.w = sideW(w); }
+  applySide();
+});
+const endSideDrag = () => { if (!sideDrag) return; sideDrag = null; $('side').classList.remove('dragging'); saveSide(); };
+$('sideResizer').addEventListener('pointerup', endSideDrag);
+$('sideResizer').addEventListener('pointercancel', endSideDrag);
+$('sideResizer').addEventListener('dblclick', toggleSide);
+// 창이 아주 좁아지면 자동으로 접고, 다시 넓어지면 원래대로
+let wasNarrow = null;
+function checkNarrow() {
+  const narrow = innerWidth < NARROW;
+  if (narrow !== wasNarrow) { autoFolded = narrow; wasNarrow = narrow; applySide(); }
+}
+addEventListener('resize', checkNarrow);
+checkNarrow();
+// 본문(오른쪽) 너비에 따라 화면 배치를 바꿔요 — 창 크기가 아니라 실제로 남은 너비 기준
+const MAIN_STEPS = [[1000, 'w-1000'], [930, 'w-930'], [680, 'w-680'], [460, 'w-460']];
+new ResizeObserver(([entry]) => {
+  const w = entry.contentRect.width;
+  for (const [px, cls] of MAIN_STEPS) $('main').classList.toggle(cls, w < px);
+}).observe($('main'));
 let recentOpen = true;
 $('recentToggle').onclick = () => { recentOpen = !recentOpen; $('recent').style.display = recentOpen ? '' : 'none'; $('recentToggle').querySelector('svg').style.transform = recentOpen ? '' : 'rotate(-90deg)'; };
 
@@ -1048,6 +1440,9 @@ function releaseWake() { try { if (wake) wake.release(); } catch {} wake = null;
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (schedule || isRecording())) requestWake(); });
 window.addEventListener('beforeunload', (e) => { if (schedule || isRecording()) { e.preventDefault(); e.returnValue = ''; } });
 $('doneNew').onclick = () => go('home');
+$('btnDoneHome').onclick = () => { if (!state.busy) go('home'); };
+$('vidName').addEventListener('click', (e) => { if (!e.target.closest('.inline-edit')) editCurrentTitle(); });
+$('vidName').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.inline-edit')) { e.preventDefault(); editCurrentTitle(); } });
 const pickFile = () => { if (!state.busy) $('fileIn').click(); };
 $('btnImport').onclick = pickFile; $('topImport').onclick = pickFile; $('navImport').onclick = pickFile;
 $('fileIn').onchange = async (e) => {
@@ -1063,6 +1458,7 @@ async function loadVideo(blob, name, knownDuration, hasAudio, item, pcm) {
   if (state.url) URL.revokeObjectURL(state.url);
   state.blob = blob; state.name = name; state.url = URL.createObjectURL(blob); state.duration = knownDuration || 0;
   state.pcm = item ? (item.pcm || null) : (pcm || null);
+  applyCapStyle(item ? item.style : null); // 작업마다 자막 위치·크기를 따로 기억해요
   state.cues = [];
   renderList();
   setStatus('subStatus', '영상은 내 컴퓨터 밖으로 나가지 않아요.');
@@ -1073,7 +1469,7 @@ async function loadVideo(blob, name, knownDuration, hasAudio, item, pcm) {
   $('vidName').textContent = name;
   const mb = (blob.size / 1048576).toFixed(1) + 'MB';
   const audioTxt = hasAudio === true ? ' · 소리 있음' : hasAudio === false ? ' · 소리 없음' : '';
-  const meta = () => { $('vidMeta').textContent = `${fmtClock(state.duration)} · ${mb}${audioTxt}`; };
+  const meta = () => { $('vidMeta').textContent = `${fmtClock(state.duration)} · ${mb}${audioTxt}`; updateModelHint(); };
   meta();
   try {
     await whenMeta(v);
@@ -1195,7 +1591,25 @@ async function makeSubtitles() {
 $('btnSub').onclick = makeSubtitles;
 $('flRedo').onclick = makeSubtitles;
 $('btnCancel').onclick = () => { if (worker) worker.terminate(); worker = null; preloaded = ''; finishSub('자막 만들기를 멈췄어요. 지금까지 만든 자막은 남아 있어요.'); };
-$('model').onchange = () => { if (state.blob) preload(); };
+// 시끄럽고 작은 한국어 음성으로 잰 결과 (틀린 글자 비율 / 영상 1분당 처리 시간, 그래픽카드 가속 기준)
+const MODEL_INFO = {
+  'onnx-community/whisper-large-v3-turbo': { acc: '약 99%', speed: 0.9 },
+  'onnx-community/whisper-small': { acc: '약 95%', speed: 0.47 },
+  'onnx-community/whisper-base': { acc: '약 86%', speed: 0.32 },
+};
+function updateModelHint() {
+  const info = MODEL_INFO[$('model').value];
+  if (!info) { $('modelHint').textContent = ''; return; }
+  const est = state.duration ? ` · 이 영상은 약 ${Math.max(1, Math.round(state.duration * info.speed / 60))}분 걸려요` : '';
+  $('modelHint').textContent = `정확도 ${info.acc}${est} (컴퓨터 성능에 따라 달라요)`;
+}
+try { const saved = localStorage.getItem('rc-model'); if (saved && MODEL_INFO[saved]) $('model').value = saved; } catch {}
+$('model').onchange = () => {
+  try { localStorage.setItem('rc-model', $('model').value); } catch {}
+  updateModelHint();
+  if (state.blob) preload();
+};
+updateModelHint();
 
 function tidy(cues) {
   const out = [];
@@ -1289,7 +1703,12 @@ let lastActive = null;
 function updateCaption() {
   const v = $('preview');
   const c = cueAt(v.currentTime || 0);
-  $('capText').textContent = c ? c.text : '';
+  // 최종 검토에서 멈춰 있을 때는 자막이 없는 시간에도 '자막 위치' 표시를 보여 줘서 옮길 수 있게 해요
+  const ghost = !c && state.screen === 'review' && v.paused && state.cues.length > 0;
+  const txt = c ? c.text : ghost ? '자막 위치' : '';
+  if ($('capText').textContent !== txt) $('capText').textContent = txt;
+  capEl().classList.toggle('ghost', ghost);
+  placeCaption();
   const idx = c ? state.cues.indexOf(c) : -1;
   if (lastActive !== idx) {
     document.querySelectorAll('.cue.active').forEach((el) => el.classList.remove('active'));
@@ -1308,13 +1727,118 @@ function updateCaption() {
 }
 function sizeCaption() {
   const h = $('preview').clientHeight || 220;
-  $('capText').parentElement.style.fontSize = (h * Number($('capSize').value) / 100).toFixed(1) + 'px';
+  capEl().style.fontSize = (h * Number($('capSize').value) / 100 * (fontOf(state.capFont).scale || 1)).toFixed(1) + 'px';
+  placeCaption();
 }
 $('preview').addEventListener('timeupdate', updateCaption);
 $('preview').addEventListener('seeked', updateCaption);
+$('preview').addEventListener('pause', updateCaption);
+$('preview').addEventListener('play', updateCaption);
 $('preview').addEventListener('loadeddata', sizeCaption);
 new ResizeObserver(sizeCaption).observe($('preview'));
-$('capSize').oninput = sizeCaption;
+$('capSize').oninput = () => { sizeCaption(); scheduleSave(); };
+
+// ---------- 자막 위치 옮기기 ----------
+const DEFAULT_CAP_POS = { x: 0.5, y: 0.86 }; // 가로 중앙, 자막 아래쪽 끝 (영상 크기에 대한 비율)
+state.capPos = { ...DEFAULT_CAP_POS };
+const capEl = () => $('capText').parentElement;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+// 실제 화면에 자막 상자를 놓아요. 영상 밖으로 나가지 않게 가장자리에서 멈춰요.
+function placeCaption() {
+  const v = $('preview'), cap = capEl();
+  const W = v.clientWidth, H = v.clientHeight;
+  if (!W || !H) return;
+  const bw = cap.offsetWidth, bh = cap.offsetHeight;
+  cap.style.left = clamp(state.capPos.x * W - bw / 2, 0, Math.max(0, W - bw)) + 'px';
+  cap.style.top = clamp(state.capPos.y * H - bh, 0, Math.max(0, H - bh)) + 'px';
+}
+function setCapPos(x, y, save) {
+  state.capPos = { x: clamp(x, 0, 1), y: clamp(y, 0.04, 1) };
+  placeCaption();
+  if (save) scheduleSave();
+}
+function setCapSelected(on) { capEl().classList.toggle('sel', on && state.screen === 'review'); }
+let capDrag = null;
+$('capText').addEventListener('pointerdown', (e) => {
+  if (state.screen !== 'review' || e.button !== 0) return;
+  e.preventDefault();
+  const r = $('preview').getBoundingClientRect(), cr = capEl().getBoundingClientRect();
+  capDrag = { id: e.pointerId, dx: e.clientX - (cr.left + cr.width / 2), dy: e.clientY - cr.bottom, r };
+  $('capText').setPointerCapture(e.pointerId);
+  $('capText').focus({ preventScroll: true });
+  $('playerBox').classList.add('dragging');
+});
+$('capText').addEventListener('pointermove', (e) => {
+  if (!capDrag || e.pointerId !== capDrag.id) return;
+  const r = capDrag.r;
+  let x = (e.clientX - capDrag.dx - r.left) / r.width;
+  const y = (e.clientY - capDrag.dy - r.top) / r.height;
+  const snap = Math.abs(x - 0.5) < 0.025; // 가운데 근처에서는 가운데에 착 붙어요
+  if (snap) x = 0.5;
+  $('playerBox').classList.toggle('snap-x', snap);
+  setCapPos(x, y);
+});
+const endCapDrag = () => {
+  if (!capDrag) return;
+  capDrag = null;
+  $('playerBox').classList.remove('dragging', 'snap-x');
+  scheduleSave();
+};
+$('capText').addEventListener('pointerup', endCapDrag);
+$('capText').addEventListener('pointercancel', endCapDrag);
+$('capText').addEventListener('focus', () => setCapSelected(true));
+$('capText').addEventListener('blur', () => setCapSelected(false));
+$('capText').addEventListener('keydown', (e) => {
+  if (state.screen !== 'review') return;
+  const step = e.shiftKey ? 0.05 : 0.01;
+  let { x, y } = state.capPos;
+  if (e.key === 'ArrowLeft') x -= step;
+  else if (e.key === 'ArrowRight') x += step;
+  else if (e.key === 'ArrowUp') y -= step;
+  else if (e.key === 'ArrowDown') y += step;
+  else if (e.key === 'Escape') { $('capText').blur(); return; }
+  else return;
+  e.preventDefault();
+  setCapPos(x, y, true);
+});
+$('btnCapReset').onclick = () => setCapPos(DEFAULT_CAP_POS.x, DEFAULT_CAP_POS.y, true);
+function applyCapStyle(style) {
+  const s = style || {};
+  state.capPos = { x: s.x ?? DEFAULT_CAP_POS.x, y: s.y ?? DEFAULT_CAP_POS.y };
+  if (s.size) $('capSize').value = s.size;
+  state.capFont = s.font && FONTS.some((f) => f.id === s.font) ? s.font : 'pretendard';
+  applyCapFont();
+}
+
+// ---------- 자막 글꼴 (무료 글꼴만, 모두 SIL 오픈 폰트 라이선스) ----------
+const FONT_FALLBACK = ', "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
+const FONTS = [
+  { id: 'pretendard', name: '프리텐다드 (기본)', family: '"Pretendard"', weight: 600 },
+  { id: 'noto', name: '본고딕 (Noto Sans KR)', family: '"Noto Sans KR"', weight: 700 },
+  { id: 'nanumgothic', name: '나눔고딕', family: '"Nanum Gothic"', weight: 800 },
+  { id: 'nanummyeongjo', name: '나눔명조', family: '"Nanum Myeongjo"', weight: 700 },
+  { id: 'gowun', name: '고운돋움', family: '"Gowun Dodum"', weight: 400 },
+  { id: 'blackhan', name: '검은고딕', family: '"Black Han Sans"', weight: 400 },
+  { id: 'dohyeon', name: '도현체', family: '"Do Hyeon"', weight: 400 },
+  { id: 'jua', name: '주아체', family: '"Jua"', weight: 400 },
+  { id: 'gaegu', name: '개구체', family: '"Gaegu"', weight: 700, scale: 1.1 },
+  { id: 'pen', name: '나눔손글씨 펜', family: '"Nanum Pen Script"', weight: 400, scale: 1.3 },
+];
+state.capFont = 'pretendard';
+const fontOf = (id) => FONTS.find((f) => f.id === id) || FONTS[0];
+const fontCss = (f) => f.family + FONT_FALLBACK;
+$('capFont').innerHTML = FONTS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('');
+function applyCapFont() {
+  const f = fontOf(state.capFont);
+  $('capFont').value = f.id;
+  for (const el of [capEl(), $('fontPreview')]) { el.style.fontFamily = fontCss(f); el.style.fontWeight = f.weight; }
+  $('fontPreview').style.fontSize = Math.round(17 * (f.scale || 1)) + 'px';
+  sizeCaption();
+  // 글꼴 파일을 받은 뒤 자막 상자 크기가 바뀌므로 위치를 다시 맞춰요
+  document.fonts.load(`${f.weight} 20px ${f.family}`, '가나다라 자막').then(placeCaption).catch(() => {});
+}
+$('capFont').onchange = () => { state.capFont = $('capFont').value; applyCapFont(); scheduleSave(); };
+applyCapFont();
 $('btnAdd').onclick = () => {
   const t = $('preview').currentTime || 0;
   const cue = { start: t, end: t + 2.5, text: '새 자막' };
@@ -1358,20 +1882,26 @@ function wrapLines(ctx, text, maxW) {
 }
 function drawCaption(ctx, text, w, h) {
   if (!text || !text.trim()) return;
-  const fs = Math.round(h * Number($('capSize').value) / 100);
-  ctx.font = `600 ${fs}px "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif`;
+  const f = fontOf(state.capFont);
+  const fs = Math.round(h * Number($('capSize').value) / 100 * (f.scale || 1));
+  ctx.font = `${f.weight} ${fs}px ${fontCss(f)}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const lines = wrapLines(ctx, text.trim(), w * 0.86);
   const lh = fs * 1.45, padX = fs * 0.4;
-  let y = h * 0.86 - (lines.length - 1) * lh;
+  // 최종 검토에서 옮긴 위치 그대로 (영상 밖으로 나가지 않게 가장자리에서 멈춤)
+  const blockW = Math.max(...lines.map((l) => ctx.measureText(l).width)) + padX * 2;
+  const blockH = lines.length * lh;
+  const cx = clamp(state.capPos.x * w, blockW / 2, Math.max(blockW / 2, w - blockW / 2));
+  const bottom = clamp(state.capPos.y * h, blockH, h);
+  let y = bottom - blockH + lh / 2;
   for (const line of lines) {
     const tw = ctx.measureText(line).width;
     ctx.fillStyle = 'rgba(0,0,0,0.62)';
     ctx.beginPath();
-    ctx.roundRect(w / 2 - tw / 2 - padX, y - lh / 2, tw + padX * 2, lh, fs * 0.2);
+    ctx.roundRect(cx - tw / 2 - padX, y - lh / 2, tw + padX * 2, lh, fs * 0.2);
     ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.fillText(line, w / 2, y + fs * 0.04);
+    ctx.fillText(line, cx, y + fs * 0.04);
     y += lh;
   }
 }
@@ -1393,6 +1923,9 @@ async function exportBurned() {
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
+    // 고른 글꼴의 글자 파일을 미리 다 받아 둬야 영상에 그 글꼴로 새겨져요
+    const f = fontOf(state.capFont);
+    try { await document.fonts.load(`${f.weight} 40px ${f.family}`, state.cues.map((c) => c.text).join('')); } catch {}
     const draw = () => { ctx.drawImage(v, 0, 0, w, h); const c = cueAt(v.currentTime); drawCaption(ctx, c && c.text, w, h); };
     draw();
     ac = new AudioContext();

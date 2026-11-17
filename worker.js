@@ -138,6 +138,16 @@ function split(audio, scale) {
   });
 }
 
+// Whisper가 자주 덧붙이는 군더더기 정리: 앞의 '-' 같은 기호, 말소리가 없을 때 지어내는 단골 문장
+const PHANTOM = /^(시청\s*해\s*주셔서\s*감사합니다|구독과\s*좋아요(\s*부탁드립니다)?|구독\s*좋아요\s*알림\s*설정(\s*부탁드립니다)?|MBC\s*뉴스\s*\S+입니다|자막\s*(제공|by)\s*.*|한글\s*자막\s*.*)[.!]?$/;
+function cleanText(t) {
+  let s = (t || '').replace(/\s+/g, ' ').trim();
+  s = s.replace(/^[-–—~"'“”‘’·•\s]+/, '').trim();
+  if (!s || /^[\p{P}\p{S}\s]+$/u.test(s)) return '';
+  if (PHANTOM.test(s)) return '';
+  return s;
+}
+
 // 모델 미리 준비(녹화하는 동안 등)와 자막 만들기를 차례대로 처리합니다.
 let queue = Promise.resolve();
 self.onmessage = (e) => { queue = queue.then(() => handle(e.data)); };
@@ -174,7 +184,7 @@ async function handle(msg) {
         const out = await asr(seg, opts);
         const chunks = out.chunks && out.chunks.length ? out.chunks : [{ timestamp: [0, len], text: out.text || '' }];
         for (const c of chunks) {
-          const text = (c.text || '').trim();
+          const text = cleanText(c.text);
           if (!text) continue;
           let [s, t] = c.timestamp || [0, len];
           s = Math.min(Math.max(s ?? 0, 0), len);
