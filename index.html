@@ -230,18 +230,41 @@
   .main.w-1000 .rt { font-size: 13px; }
 
   /* ================= 2·3·4단계 (패널 화면) ================= */
-  .page { position: relative; z-index: 2; min-height: 100vh; padding: 56px 104px 48px 56px; display: flex; flex-direction: column; justify-content: center; }
+  /* 위에 '다음 단계' 링크, 그 아래 흰 패널 (가운데 정렬 대신 위에서부터 차례로) */
+  .page { position: relative; z-index: 2; min-height: 100vh; padding: clamp(24px, 5vh, 44px) 104px 40px 56px; display: flex; flex-direction: column; justify-content: flex-start; }
   .panel {
     background: var(--panel); border-radius: 6px; padding: 38px 40px; box-shadow: 0 30px 80px rgba(0,0,0,.35);
     display: grid; gap: 32px; align-items: start;
   }
-  .panel.sub { grid-template-columns: 200px minmax(0, 1fr) 280px; }
+  /* 자막 만들기 패널: ③ 제목 줄 / ② 큰 영상 / ④ 파일 정보, 오른쪽에 OPTIONS */
+  .panel.sub {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas: "head opts" "stage opts" "file opts";
+    grid-template-rows: auto auto 1fr;
+    column-gap: 36px; row-gap: 16px;
+  }
+  .panel.sub .sub-head { grid-area: head; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .panel.sub .head-side { text-align: right; max-width: 300px; }
+  .panel.sub .head-side .stepno { margin: 0; padding: 0; border: 0; }
+  .panel.sub .head-side .desc { margin: 4px 0 0; }
+  .panel.sub .stage { grid-area: stage; }
+  .panel.sub .file-row { grid-area: file; }
+  .panel.sub .opts-col { grid-area: opts; }
+  .stage.big { min-height: 0; padding: 10px; }
+  .stage.big .player video { max-height: min(60vh, 520px); }
+  .file-row { margin-top: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 15px; }
+  .file-row .editable { font-weight: 700; }
+  .file-row small { display: inline; color: var(--muted); font-size: 13px; }
+  .file-row .inline-edit { font-size: 14px; max-width: 420px; }
   .panel.review { grid-template-columns: 190px minmax(0, 1fr) 300px; gap: 28px; }
   .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); gap: 0; align-items: stretch; }
   .panel.done .save-col .btn { margin-top: auto; }
   .main.w-930 .panel.sub, .main.w-930 .panel.review { grid-template-columns: 1fr; }
+  .main.w-930 .panel.sub { grid-template-areas: "head" "stage" "file" "opts"; grid-template-rows: auto; }
+  .main.w-680 .panel.sub .sub-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .main.w-680 .panel.sub .head-side { text-align: left; }
   .main.w-930 .panel.done { grid-template-columns: 1fr; }
-  .main.w-930 .page { padding: 56px 24px 32px; }
+  .main.w-930 .page { padding: 32px 24px 32px; }
   .main.w-930 .save-col { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; margin-top: 20px; min-height: 0; }
   .main.w-930 .done .ttl { padding-right: 0; }
   .ttl h2 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
@@ -338,7 +361,7 @@
   }
   .big-link:hover:not(:disabled) { color: #fff; }
   .big-link:disabled { color: rgba(255,255,255,.3); cursor: default; }
-  .bottom-links.top { margin: 0 0 28px; }
+  .bottom-links.top { margin: 0 0 clamp(16px, 3vh, 28px); }
   .small-link { border: 0; background: none; color: rgba(255,255,255,.6); cursor: pointer; font-size: 14px; padding: 0 0 6px; }
   .small-link:hover { color: #fff; }
   .nav button .tag.live { color: var(--orange); font-weight: 600; }
@@ -565,16 +588,21 @@
   <section class="screen" id="scr-sub">
     <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
+      <div class="bottom-links top">
+        <button class="big-link" data-go="review" id="subNext"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>다음 단계 · 최종 검토</button>
+        <button class="small-link" data-go="home">← 녹화 화면으로</button>
+      </div>
       <div class="panel sub">
-        <div class="ttl">
-          <h2>Subtitle</h2>
-          <p class="ko">자막 만들기</p>
-          <p class="desc">영상 속 말을 AI가 받아 적어요. 처음 한 번은 AI 모델을 내려받아요.</p>
-          <div class="stepno">STEP 02 / 04</div>
-          <div class="file"><span id="vidName" class="editable" role="button" tabindex="0" title="눌러서 이름 바꾸기">영상</span><small id="vidMeta"></small></div>
+        <div class="ttl sub-head">
+          <div><h2>Subtitle</h2><p class="ko">자막 만들기</p></div>
+          <div class="head-side">
+            <div class="stepno">STEP 02 / 04</div>
+            <p class="desc">영상 속 말을 AI가 받아 적어요. 처음 한 번은 AI 모델을 내려받아요.</p>
+          </div>
         </div>
-        <div class="stage" id="slotSub"></div>
-        <div>
+        <div class="stage big" id="slotSub"></div>
+        <div class="file file-row"><span id="vidName" class="editable" role="button" tabindex="0" title="눌러서 이름 바꾸기">영상</span><small id="vidMeta"></small></div>
+        <div class="opts-col">
           <div class="col-title">OPTIONS</div>
           <div class="field"><label for="lang">언어</label>
             <select id="lang">
@@ -603,10 +631,6 @@
           <button id="btnCancel" class="linkbtn" hidden>그만하기</button>
         </div>
       </div>
-      <div class="bottom-links">
-        <button class="big-link" data-go="review" id="subNext"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>다음 단계 · 최종 검토</button>
-        <button class="small-link" data-go="home">← 녹화 화면으로</button>
-      </div>
     </div>
     <div class="floaters">
       <button class="fl" data-act="full" title="영상 크게 보기"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button>
@@ -618,6 +642,10 @@
   <section class="screen" id="scr-review">
     <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
+      <div class="bottom-links top">
+        <button class="big-link" id="reviewNext"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>다음 단계 · 저장하기</button>
+        <button class="small-link" data-go="sub">← 자막 만들기로</button>
+      </div>
       <div class="panel review">
         <div class="ttl">
           <h2>Review</h2>
@@ -637,10 +665,6 @@
           <div class="col-title">SUBTITLES <span id="cueCount" style="float:right;letter-spacing:0"></span></div>
           <div id="list" class="list"></div>
         </div>
-      </div>
-      <div class="bottom-links">
-        <button class="big-link" id="reviewNext"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>다음 단계 · 저장하기</button>
-        <button class="small-link" data-go="sub">← 자막 만들기로</button>
       </div>
     </div>
     <div class="floaters">
