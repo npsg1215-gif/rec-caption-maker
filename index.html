@@ -231,13 +231,13 @@
 
   /* ================= 2·3·4단계 (패널 화면) ================= */
   /* 위에 '다음 단계' 링크, 그 아래 흰 패널 (가운데 정렬 대신 위에서부터 차례로) */
-  .page { position: relative; z-index: 2; min-height: 100vh; padding: clamp(24px, 5vh, 44px) 104px 40px 56px; display: flex; flex-direction: column; justify-content: flex-start; }
+  .page { position: relative; z-index: 2; min-height: 100vh; padding: clamp(16px, 3vh, 30px) 56px 14px; display: flex; flex-direction: column; justify-content: flex-start; }
   .panel {
     background: var(--panel); border-radius: 6px; padding: 38px 40px; box-shadow: 0 30px 80px rgba(0,0,0,.35);
     display: grid; gap: 32px; align-items: start;
   }
   /* 페이지 제목 줄: ← → 페이지 이름 (뒤로/앞으로 단계 이동) */
-  .ptitle { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 clamp(12px, 2.2vh, 20px); min-height: 38px; }
+  .ptitle { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 clamp(10px, 1.6vh, 16px); min-height: 38px; }
   .pnav {
     width: 36px; height: 36px; flex: none; border: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center;
     background: rgba(255,255,255,.75); color: var(--ink); box-shadow: 0 2px 8px rgba(40,80,150,.12); transition: background .15s, color .15s;
@@ -252,18 +252,24 @@
   /* 영상 칸 = 영상 크기 그대로 (검은 여백 없이 꽉 차게). 창 높이에 맞춰 가장 크게, 아래 내용은 스크롤 없이 보이게 */
   :root { --ar: 1.7778; }
   .stage.fit { background: none; padding: 0; min-height: 0; display: block; border-radius: 0; }
-  .stage.fit .player { display: block; width: min(100%, calc(var(--cap) * var(--ar))); max-width: 100%; margin: 0 auto; background: #1f2c45; border-radius: 6px; }
+  /* 영상 둘레에 어두운 테두리를 둘러서, 흰 화면을 녹화해도 영상 경계가 보이게 (자막 위치 계산은 테두리 안쪽 기준이라 그대로) */
+  .stage.fit .player {
+    display: block; width: min(100%, calc(var(--cap) * var(--ar))); max-width: 100%; margin: 0 auto; background: #1f2c45;
+    border: 6px solid #1f2c45; border-bottom: 0; border-radius: 8px; box-shadow: 0 8px 22px rgba(25,45,85,.18);
+  }
+  .stage.fit .player:fullscreen { border: 0; border-radius: 0; box-shadow: none; }
   .stage.fit .player video { width: 100%; height: auto; max-width: none; max-height: none; }
   .stage.fit .player .pctl { padding: 7px 10px 7px; }
-  .panel.sub, .panel.trim, .panel.review { padding: 30px 34px; }
+  /* 패널은 화면 아래까지 채우고, 안쪽 여백을 줄여 영상이 최대한 크게 */
+  .panel.sub, .panel.trim, .panel.review { padding: 20px 24px; flex: 1; align-content: start; }
 
   /* 자막 만들기 패널: 큰 영상 / 파일 정보, 오른쪽에 OPTIONS */
   .panel.sub {
-    --cap: max(240px, calc(100vh - 290px));
-    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(290px, 1fr);
+    --cap: max(240px, calc(100vh - 220px));
+    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(270px, 1fr);
     grid-template-areas: "stage opts" "file opts";
     grid-template-rows: auto 1fr;
-    column-gap: 32px; row-gap: 14px;
+    column-gap: 28px; row-gap: 12px;
   }
   .panel.sub .stage { grid-area: stage; }
   .panel.sub .file-row { grid-area: file; }
@@ -291,10 +297,10 @@
 
   /* ---------- 길이 편집 패널 ---------- */
   .panel.trim {
-    --cap: max(220px, calc(100vh - 452px));
+    --cap: max(220px, calc(100vh - 372px));
     grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(240px, 1fr);
     grid-template-areas: "stage info" "tl tl";
-    column-gap: 32px; row-gap: 14px;
+    column-gap: 28px; row-gap: 12px;
   }
   .panel.trim .stage { grid-area: stage; }
   .trim-info { grid-area: info; display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
@@ -307,17 +313,18 @@
   .main.w-930 .panel.trim { grid-template-columns: 1fr; grid-template-areas: "stage" "tl" "info"; }
 
   /* ---------- CapCut 방식 타임라인 ---------- */
-  .tl-wrap { grid-area: tl; background: #1b2438; border-radius: 8px; padding: 6px 0 10px; color: #c9d3e6; user-select: none; min-width: 0; }
-  .tl-tools { display: flex; align-items: center; gap: 2px; padding: 0 12px 6px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 4px; flex-wrap: wrap; }
-  .tbtn { width: 32px; height: 30px; border: 0; border-radius: 6px; background: transparent; color: #c9d3e6; cursor: pointer; display: grid; place-items: center; }
+  .tl-wrap { grid-area: tl; background: #1b2438; border-radius: 8px; padding: 4px 0 6px; color: #c9d3e6; user-select: none; min-width: 0; }
+  .tl-tools { display: flex; align-items: center; gap: 2px; padding: 0 12px 4px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 4px; flex-wrap: wrap; }
+  .tbtn { width: 32px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #c9d3e6; cursor: pointer; display: grid; place-items: center; }
   .tbtn:hover:not(:disabled) { background: rgba(255,255,255,.1); color: #fff; }
   .tbtn:disabled { opacity: .3; cursor: default; }
   .tsep { width: 1px; height: 18px; background: rgba(255,255,255,.14); margin: 0 6px; }
   .tl-time { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 12.5px; color: #9fb0cc; }
   .tl-zoom { display: flex; align-items: center; gap: 6px; color: #9fb0cc; margin-left: 16px; }
   .tl-zoom input { width: 110px; accent-color: var(--orange-2); }
-  .tl { position: relative; overflow-x: auto; overflow-y: hidden; padding: 0 16px; scrollbar-color: #3a4a68 transparent; }
-  .tl-inner { position: relative; height: 132px; cursor: text; }
+  /* 확대해서 가로 스크롤 막대가 생겨도 높이가 바뀌지 않게 막대 자리를 미리 둬요 */
+  .tl { position: relative; overflow-x: auto; overflow-y: hidden; padding: 0 16px; height: 136px; scrollbar-width: thin; scrollbar-color: #3a4a68 transparent; }
+  .tl-inner { position: relative; height: 124px; cursor: text; }
   .tl-ruler { position: absolute; left: 0; right: 0; top: 0; height: 26px; }
   .tl-ruler .tk { position: absolute; bottom: 3px; width: 1px; height: 4px; background: rgba(255,255,255,.22); }
   .tl-ruler .tk.big { height: 8px; background: rgba(255,255,255,.45); }
@@ -336,14 +343,33 @@
   .tl-head { position: absolute; top: 0; bottom: 0; width: 0; z-index: 5; pointer-events: none; }
   .tl-head::before { content: ""; position: absolute; left: -1px; top: 12px; bottom: 0; width: 2px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,.4); }
   .tl-head i { position: absolute; left: -7px; top: 0; width: 14px; height: 16px; background: #fff; border-radius: 3px 3px 7px 7px; pointer-events: auto; cursor: ew-resize; }
+  /* 자막 편집: ① 영상(왼쪽 위) ② 자막 목록(오른쪽, 위아래 끝까지) ③ 도구(영상 아래) */
   .panel.review {
-    --cap: max(220px, calc(100vh - 250px));
-    grid-template-columns: 190px minmax(0, calc(var(--cap) * var(--ar))) minmax(280px, 1fr); gap: 28px;
+    --cap: max(220px, calc(100vh - 262px));
+    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(340px, 1fr);
+    grid-template-areas: "stage list" "tools list";
+    grid-template-rows: 1fr auto; column-gap: 28px; row-gap: 12px; align-items: stretch;
   }
-  .panel.review .tools { margin-top: 0; }
+  .panel.review .stage { grid-area: stage; align-self: start; }
+  .rv-list { grid-area: list; position: relative; min-height: 240px; }
+  .rv-list-in { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  .rv-list .list { flex: 1; min-height: 0; max-height: none; }
+  .rv-tools {
+    grid-area: tools; display: flex; align-items: center; flex-wrap: wrap; gap: 12px 22px;
+    padding: 12px 16px; background: #f5f8fd; border: 1px solid var(--line); border-radius: 8px;
+  }
+  .rv-size { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); width: 150px; }
+  .rv-size input { accent-color: var(--orange); width: 100%; }
+  .rv-pos { flex: 1; min-width: 210px; }
+  .rv-pos .pos-hint { margin-top: 2px; }
+  .rv-btns { display: flex; gap: 8px; margin-left: auto; }
+  .rv-btns .btn { height: 40px; padding: 0 18px; white-space: nowrap; }
+  .main.w-930 .panel.review { grid-template-columns: 1fr; grid-template-areas: "stage" "tools" "list"; grid-template-rows: auto; }
+  .main.w-930 .rv-list-in { position: static; }
+  .main.w-930 .rv-list .list { max-height: 50vh; }
   .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); grid-template-rows: 1fr auto; gap: 0; align-items: stretch; flex: 1; }
   .panel.done .save-col .btn { margin-top: auto; }
-  .main.w-930 .panel.sub, .main.w-930 .panel.review { grid-template-columns: 1fr; }
+  .main.w-930 .panel.sub { grid-template-columns: 1fr; }
   .main.w-930 .panel.sub { grid-template-areas: "stage" "file" "opts"; grid-template-rows: auto; }
   .main.w-930 .panel.sub .opts-col { max-width: none; }
   .main.w-930 .trim-info { max-width: none; }
@@ -423,7 +449,7 @@
   .save-col p { margin: 0 0 18px; font-size: 13.5px; color: #5f5d58; flex: 1; }
   .save-col .art { height: 90px; border-radius: 6px; margin-bottom: 16px; }
   /* 저장 전 미리보기 (자막 영상 / 자막 파일 / 원본 영상) */
-  .pv { background: #1f2c45; border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+  .pv { background: #1f2c45; border-radius: 8px; overflow: hidden; margin-bottom: 16px; padding: 5px 5px 0; box-shadow: 0 6px 16px rgba(25,45,85,.14); }
   .pv-scr { position: relative; aspect-ratio: var(--ar); background: #000; cursor: pointer; }
   .pv-scr canvas, .pv-scr video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; }
   .pv .pctl { display: flex; align-items: center; gap: 8px; padding: 5px 8px; color: #d6e0f2; font-size: 12px; line-height: 1.2; min-height: 36px; }
@@ -772,10 +798,6 @@
         </div>
       </div>
     </div>
-    <div class="floaters">
-      <button class="fl" data-act="full" title="영상 크게 보기"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button>
-      <button class="fl" id="flRedo" title="자막 다시 만들기"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button>
-    </div>
   </section>
 
   <!-- ================= 4. 자막 편집 ================= -->
@@ -788,26 +810,27 @@
         <h1>자막 편집</h1><span class="pstep">STEP 04 / 05</span>
         <p class="pdesc">자막 글자와 시간을 고치고, 자막을 끌어 위치를 옮기거나 새 자막을 직접 넣어요. 오른쪽 목록의 자막을 누르면 그 시간으로 이동해요.</p>
       </div>
+      <!-- ① 영상(왼쪽 위) ② 자막 목록(오른쪽) ③ 자막 크기·위치·추가 도구(영상 아래) -->
       <div class="panel review">
-        <div class="ttl">
-          <div class="tools">
-            <label>자막 크기<input id="capSize" type="range" min="3" max="9" step="0.5" value="5.5"></label>
-            <div class="pos-row">자막 위치<button class="linkbtn" id="btnCapReset">위치 초기화</button></div>
-            <div class="pos-hint">영상 속 자막을 <b>끌어서</b> 옮기거나, 자막을 누른 뒤 <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>로 옮겨요. <kbd>Shift</kbd>를 같이 누르면 크게 움직여요.</div>
-            <button id="btnAdd" class="btn light wide">+ 현재 위치에 자막 추가</button>
-            <button id="btnFinish" class="btn dark wide">편집 완료</button>
+        <div class="stage fit" id="slotReview"></div>
+        <div class="rv-list">
+          <div class="rv-list-in">
+            <div class="col-title">SUBTITLES <span id="cueCount" style="float:right;letter-spacing:0"></span></div>
+            <div id="list" class="list"></div>
           </div>
         </div>
-        <div class="stage fit" id="slotReview"></div>
-        <div>
-          <div class="col-title">SUBTITLES <span id="cueCount" style="float:right;letter-spacing:0"></span></div>
-          <div id="list" class="list"></div>
+        <div class="rv-tools">
+          <label class="rv-size">자막 크기<input id="capSize" type="range" min="3" max="9" step="0.5" value="5.5"></label>
+          <div class="rv-pos">
+            <div class="pos-row">자막 위치<button class="linkbtn" id="btnCapReset">위치 초기화</button></div>
+            <div class="pos-hint">자막을 <b>끌어서</b> 옮기거나, 누른 뒤 <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>로 옮겨요 (<kbd>Shift</kbd>: 크게)</div>
+          </div>
+          <div class="rv-btns">
+            <button id="btnAdd" class="btn light" title="지금 재생 위치에 새 자막을 넣어요">+ 자막 추가</button>
+            <button id="btnFinish" class="btn dark">편집 완료</button>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="floaters">
-      <button class="fl" data-act="full" title="영상 크게 보기"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button>
-      <button class="fl" data-go="sub" title="자막 다시 만들기"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button>
     </div>
   </section>
 
@@ -1331,7 +1354,6 @@ function updateNav() {
   // 제목 줄의 ← → : 갈 수 있는 단계만 눌러져요 (자막을 만드는 동안에는 앞으로 못 가요)
   document.querySelectorAll('.pnav[data-go]').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
   $('subNext').disabled = !n || state.busy;
-  $('flRedo').disabled = !state.blob || state.busy;
   ['btnSrt', 'btnBurn'].forEach((id) => ($(id).disabled = !n || state.busy));
   renderRecents();
 }
@@ -1796,7 +1818,6 @@ async function makeSubtitles() {
   worker.postMessage(payload, transfer);
 }
 $('btnSub').onclick = makeSubtitles;
-$('flRedo').onclick = makeSubtitles;
 $('btnCancel').onclick = () => { if (worker) worker.terminate(); worker = null; preloaded = ''; finishSub('자막 만들기를 멈췄어요. 지금까지 만든 자막은 남아 있어요.'); };
 // 시끄럽고 작은 한국어 음성으로 잰 결과 (틀린 글자 비율 / 영상 1분당 처리 시간, 그래픽카드 가속 기준)
 const MODEL_INFO = {
