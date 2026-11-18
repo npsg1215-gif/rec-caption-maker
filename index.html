@@ -266,7 +266,7 @@
   /* 자막 만들기 패널: 큰 영상 / 파일 정보, 오른쪽에 OPTIONS */
   .panel.sub {
     --cap: max(240px, calc(100vh - 220px));
-    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(270px, 1fr);
+    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(230px, 1fr);
     grid-template-areas: "stage split opts" "file split opts";
     grid-template-rows: auto 1fr;
     column-gap: 4px; row-gap: 12px;
@@ -283,7 +283,16 @@
   .main.w-930 .vsplit { display: none; }
   .panel.sub .stage { grid-area: stage; }
   .panel.sub .file-row { grid-area: file; }
-  .panel.sub .opts-col { grid-area: opts; max-width: 360px; }
+  .panel.sub .opts-col { grid-area: opts; max-width: 270px; }
+  /* 옵션 칸은 얇고 촘촘하게 (한눈에 보이게) */
+  .opts-col .col-title { margin-bottom: 10px; padding-bottom: 8px; }
+  .opts-col .field { margin-bottom: 10px; }
+  .opts-col .field label { font-size: 12px; margin-bottom: 3px; }
+  .opts-col .field select { height: 34px; font-size: 13px; padding: 0 8px; }
+  .opts-col .font-preview { margin-top: 6px; padding: 7px 8px; font-size: 14px; border-radius: 6px; }
+  .opts-col .model-hint { font-size: 11.5px; margin-top: 4px; }
+  .opts-col .btn { height: 38px; font-size: 13.5px; }
+  .opts-col .status { font-size: 12px; }
   .file-row { margin-top: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 15px; }
   .file-row .editable { font-weight: 700; }
   .file-row small { display: inline; color: var(--muted); font-size: 13px; }
@@ -308,14 +317,18 @@
   /* ---------- 길이 편집 패널 ---------- */
   .panel.trim {
     --cap: max(220px, calc(100vh - 372px));
-    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(240px, 1fr);
+    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(200px, 1fr);
     grid-template-areas: "stage split info" "tl tl tl";
     column-gap: 4px; row-gap: 12px;
   }
   .panel.trim .stage { grid-area: stage; }
-  .trim-info { grid-area: info; display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
-  .len-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; color: var(--muted); }
-  .len-row b { color: var(--ink); font-size: 16px; font-variant-numeric: tabular-nums; }
+  /* 길이 정보 칸: 얇고 촘촘하게 */
+  .trim-info { grid-area: info; display: flex; flex-direction: column; gap: 6px; max-width: 230px; }
+  .trim-info .col-title { margin-bottom: 4px; padding-bottom: 8px; }
+  .trim-info .btn { height: 32px; font-size: 12.5px; padding: 0 12px; margin-top: 4px; }
+  .trim-info .trim-keys { font-size: 11.5px; gap: 4px 10px; }
+  .len-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--muted); }
+  .len-row b { color: var(--ink); font-size: 14.5px; font-variant-numeric: tabular-nums; }
   .trim-keys { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 5px 14px; font-size: 12px; color: var(--muted); margin-top: 4px; }
   .trim-keys span { white-space: nowrap; }
   .trim-keys span:last-child { grid-column: 1 / -1; }
@@ -356,7 +369,7 @@
   /* 자막 편집: ① 영상(왼쪽 위) ② 자막 목록(오른쪽, 위아래 끝까지) ③ 도구(영상 아래) */
   .panel.review {
     --cap: max(220px, calc(100vh - 262px));
-    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(340px, 1fr);
+    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(320px, 1fr);
     grid-template-areas: "stage split list" "tools split list";
     grid-template-rows: 1fr auto; column-gap: 4px; row-gap: 12px; align-items: stretch;
   }
@@ -364,16 +377,18 @@
   .rv-list { grid-area: list; position: relative; min-height: 240px; }
   .rv-list-in { position: absolute; inset: 0; display: flex; flex-direction: column; }
   .rv-list .list { flex: 1; min-height: 0; max-height: none; }
+  /* 자막 도구: 영상 아래 얇은 한 줄 */
   .rv-tools {
-    grid-area: tools; display: flex; align-items: center; flex-wrap: wrap; gap: 12px 22px;
-    padding: 12px 16px; background: #f5f8fd; border: 1px solid var(--line); border-radius: 8px;
+    grid-area: tools; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px;
+    padding: 6px 8px 6px 14px; background: #f5f8fd; border: 1px solid var(--line); border-radius: 8px; font-size: 12.5px; color: var(--muted);
   }
-  .rv-size { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); width: 150px; }
-  .rv-size input { accent-color: var(--orange); width: 100%; }
-  .rv-pos { flex: 1; min-width: 210px; }
-  .rv-pos .pos-hint { margin-top: 2px; }
-  .rv-btns { display: flex; gap: 8px; margin-left: auto; }
-  .rv-btns .btn { height: 40px; padding: 0 18px; white-space: nowrap; }
+  .rv-size { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .rv-size input { accent-color: var(--orange); width: 110px; }
+  .rv-sep { width: 1px; height: 18px; background: var(--line); }
+  .rv-pos { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .rv-tip { cursor: help; border-bottom: 1px dotted #9fb0cc; }
+  .rv-btns { display: flex; gap: 6px; margin-left: auto; }
+  .rv-btns .btn { height: 32px; padding: 0 14px; font-size: 13px; white-space: nowrap; }
   .main.w-930 .panel.review { grid-template-columns: 1fr; grid-template-areas: "stage" "tools" "list"; grid-template-rows: auto; }
   .main.w-930 .rv-list-in { position: static; }
   .main.w-930 .rv-list .list { max-height: 50vh; }
@@ -729,7 +744,7 @@
       </div>
       <div class="panel trim">
         <div class="stage fit" id="slotTrim"></div>
-        <div class="vsplit" data-key="trim" data-min="240" role="separator" aria-orientation="vertical" aria-label="영상 크기 조절" tabindex="0" title="끌어서 영상 크기 조절 · 두 번 누르면 기본 크기"></div>
+        <div class="vsplit" data-key="trim" data-min="200" role="separator" aria-orientation="vertical" aria-label="영상 크기 조절" tabindex="0" title="끌어서 영상 크기 조절 · 두 번 누르면 기본 크기"></div>
         <div class="trim-info">
           <div class="col-title">LENGTH</div>
           <div class="len-row"><span>원본 길이</span><b id="lenOrig">00:00</b></div>
@@ -778,7 +793,7 @@
       </div>
       <div class="panel sub">
         <div class="stage fit" id="slotSub"></div>
-        <div class="vsplit" data-key="sub" data-min="270" role="separator" aria-orientation="vertical" aria-label="영상 크기 조절" tabindex="0" title="끌어서 영상 크기 조절 · 두 번 누르면 기본 크기"></div>
+        <div class="vsplit" data-key="sub" data-min="230" role="separator" aria-orientation="vertical" aria-label="영상 크기 조절" tabindex="0" title="끌어서 영상 크기 조절 · 두 번 누르면 기본 크기"></div>
         <div class="file file-row"><span id="vidName" class="editable" role="button" tabindex="0" title="눌러서 이름 바꾸기">영상</span><small id="vidMeta"></small></div>
         <div class="opts-col">
           <div class="col-title">OPTIONS</div>
@@ -825,7 +840,7 @@
       <!-- ① 영상(왼쪽 위) ② 자막 목록(오른쪽) ③ 자막 크기·위치·추가 도구(영상 아래) -->
       <div class="panel review">
         <div class="stage fit" id="slotReview"></div>
-        <div class="vsplit" data-key="review" data-min="340" role="separator" aria-orientation="vertical" aria-label="영상과 자막 목록 크기 조절" tabindex="0" title="끌어서 영상·자막 목록 크기 조절 · 두 번 누르면 기본 크기"></div>
+        <div class="vsplit" data-key="review" data-min="320" role="separator" aria-orientation="vertical" aria-label="영상과 자막 목록 크기 조절" tabindex="0" title="끌어서 영상·자막 목록 크기 조절 · 두 번 누르면 기본 크기"></div>
         <div class="rv-list">
           <div class="rv-list-in">
             <div class="col-title">SUBTITLES <span id="cueCount" style="float:right;letter-spacing:0"></span></div>
@@ -834,10 +849,8 @@
         </div>
         <div class="rv-tools">
           <label class="rv-size">자막 크기<input id="capSize" type="range" min="3" max="9" step="0.5" value="5.5"></label>
-          <div class="rv-pos">
-            <div class="pos-row">자막 위치<button class="linkbtn" id="btnCapReset">위치 초기화</button></div>
-            <div class="pos-hint">자막을 <b>끌어서</b> 옮기거나, 누른 뒤 <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>로 옮겨요 (<kbd>Shift</kbd>: 크게)</div>
-          </div>
+          <span class="rv-sep"></span>
+          <div class="rv-pos">자막 위치 <span class="rv-tip" title="영상 속 자막을 끌어서 옮기거나, 자막을 누른 뒤 ←→↑↓ 키로 옮겨요. Shift를 같이 누르면 크게 움직여요.">끌거나 방향키로 이동</span><button class="linkbtn" id="btnCapReset">초기화</button></div>
           <div class="rv-btns">
             <button id="btnAdd" class="btn light" title="지금 재생 위치에 새 자막을 넣어요">+ 자막 추가</button>
             <button id="btnFinish" class="btn dark">편집 완료</button>
