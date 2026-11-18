@@ -236,22 +236,38 @@
     background: var(--panel); border-radius: 6px; padding: 38px 40px; box-shadow: 0 30px 80px rgba(0,0,0,.35);
     display: grid; gap: 32px; align-items: start;
   }
-  /* 자막 만들기 패널: ③ 제목 줄 / ② 큰 영상 / ④ 파일 정보, 오른쪽에 OPTIONS */
-  .panel.sub {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    grid-template-areas: "head opts" "stage opts" "file opts";
-    grid-template-rows: auto auto 1fr;
-    column-gap: 36px; row-gap: 16px;
+  /* 페이지 제목 줄: ← → 페이지 이름 (뒤로/앞으로 단계 이동) */
+  .ptitle { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 clamp(12px, 2.2vh, 20px); min-height: 38px; }
+  .pnav {
+    width: 36px; height: 36px; flex: none; border: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center;
+    background: rgba(255,255,255,.75); color: var(--ink); box-shadow: 0 2px 8px rgba(40,80,150,.12); transition: background .15s, color .15s;
   }
-  .panel.sub .sub-head { grid-area: head; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
-  .panel.sub .head-side { text-align: right; max-width: 300px; }
-  .panel.sub .head-side .stepno { margin: 0; padding: 0; border: 0; }
-  .panel.sub .head-side .desc { margin: 4px 0 0; }
+  .pnav:hover:not(:disabled) { background: #fff; color: var(--orange); }
+  .pnav:disabled { opacity: .35; cursor: default; box-shadow: none; }
+  .ptitle h1 { margin: 0 0 0 8px; font-size: 26px; font-weight: 500; letter-spacing: -.01em; color: var(--ink); line-height: 1.2; }
+  .ptitle .pstep { margin-left: 8px; font-size: 11.5px; letter-spacing: .14em; color: #5f7598; }
+  .ptitle .pdesc { margin: 0 0 0 auto; max-width: 460px; font-size: 13px; color: #4d6288; text-align: right; }
+  .main.w-930 .ptitle .pdesc { flex-basis: 100%; margin: 2px 0 0; max-width: none; text-align: left; }
+
+  /* 영상 칸 = 영상 크기 그대로 (검은 여백 없이 꽉 차게). 창 높이에 맞춰 가장 크게, 아래 내용은 스크롤 없이 보이게 */
+  :root { --ar: 1.7778; }
+  .stage.fit { background: none; padding: 0; min-height: 0; display: block; border-radius: 0; }
+  .stage.fit .player { display: block; width: min(100%, calc(var(--cap) * var(--ar))); max-width: 100%; margin: 0 auto; background: #1f2c45; border-radius: 6px; }
+  .stage.fit .player video { width: 100%; height: auto; max-width: none; max-height: none; }
+  .stage.fit .player .pctl { padding: 7px 10px 7px; }
+  .panel.sub, .panel.trim, .panel.review { padding: 30px 34px; }
+
+  /* 자막 만들기 패널: 큰 영상 / 파일 정보, 오른쪽에 OPTIONS */
+  .panel.sub {
+    --cap: max(240px, calc(100vh - 290px));
+    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(290px, 1fr);
+    grid-template-areas: "stage opts" "file opts";
+    grid-template-rows: auto 1fr;
+    column-gap: 32px; row-gap: 14px;
+  }
   .panel.sub .stage { grid-area: stage; }
   .panel.sub .file-row { grid-area: file; }
-  .panel.sub .opts-col { grid-area: opts; }
-  .stage.big { min-height: 0; padding: 10px; }
-  .stage.big .player video { max-height: min(60vh, 520px); }
+  .panel.sub .opts-col { grid-area: opts; max-width: 360px; }
   .file-row { margin-top: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 15px; }
   .file-row .editable { font-weight: 700; }
   .file-row small { display: inline; color: var(--muted); font-size: 13px; }
@@ -270,30 +286,25 @@
   .player video { cursor: pointer; }
   .player:fullscreen { background: #000; display: flex; flex-direction: column; justify-content: center; border-radius: 0; }
   .player:fullscreen video { max-height: calc(100vh - 48px) !important; max-width: 100%; margin: 0 auto; }
+  .stage.fit .player:fullscreen { width: 100%; }
+  .stage.fit .player:fullscreen video { width: auto; height: auto; }
 
   /* ---------- 길이 편집 패널 ---------- */
   .panel.trim {
-    grid-template-columns: minmax(0, 1fr) 260px;
-    grid-template-areas: "head head" "stage info" "tl tl";
-    column-gap: 32px; row-gap: 16px;
+    --cap: max(220px, calc(100vh - 452px));
+    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(240px, 1fr);
+    grid-template-areas: "stage info" "tl tl";
+    column-gap: 32px; row-gap: 14px;
   }
-  .panel.trim .sub-head { grid-area: head; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
-  .panel.trim .head-side { text-align: right; max-width: 320px; }
-  .panel.trim .head-side .stepno { margin: 0; padding: 0; border: 0; }
-  .panel.trim .head-side .desc { margin: 4px 0 0; }
   .panel.trim .stage { grid-area: stage; }
-  /* 창 높이에 맞춰 영상 크기를 정해서, 아래 길이 바까지 스크롤 없이 한 화면에 보이게 해요 */
-  .panel.trim .stage.big .player video { max-height: max(220px, min(420px, calc(100vh - 520px))); }
-  .trim-info { grid-area: info; display: flex; flex-direction: column; gap: 10px; }
+  .trim-info { grid-area: info; display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
   .len-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; color: var(--muted); }
   .len-row b { color: var(--ink); font-size: 16px; font-variant-numeric: tabular-nums; }
   .trim-keys { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 5px 14px; font-size: 12px; color: var(--muted); margin-top: 4px; }
   .trim-keys span { white-space: nowrap; }
   .trim-keys span:last-child { grid-column: 1 / -1; }
   .trim-keys kbd { font: inherit; font-size: 11px; background: #eef3fa; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--ink); }
-  .main.w-930 .panel.trim { grid-template-columns: 1fr; grid-template-areas: "head" "stage" "tl" "info"; }
-  .main.w-680 .panel.trim .sub-head { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .main.w-680 .panel.trim .head-side { text-align: left; }
+  .main.w-930 .panel.trim { grid-template-columns: 1fr; grid-template-areas: "stage" "tl" "info"; }
 
   /* ---------- CapCut 방식 타임라인 ---------- */
   .tl-wrap { grid-area: tl; background: #1b2438; border-radius: 8px; padding: 6px 0 10px; color: #c9d3e6; user-select: none; min-width: 0; }
@@ -325,14 +336,19 @@
   .tl-head { position: absolute; top: 0; bottom: 0; width: 0; z-index: 5; pointer-events: none; }
   .tl-head::before { content: ""; position: absolute; left: -1px; top: 12px; bottom: 0; width: 2px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,.4); }
   .tl-head i { position: absolute; left: -7px; top: 0; width: 14px; height: 16px; background: #fff; border-radius: 3px 3px 7px 7px; pointer-events: auto; cursor: ew-resize; }
-  .panel.review { grid-template-columns: 190px minmax(0, 1fr) 300px; gap: 28px; }
-  .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); gap: 0; align-items: stretch; }
+  .panel.review {
+    --cap: max(220px, calc(100vh - 250px));
+    grid-template-columns: 190px minmax(0, calc(var(--cap) * var(--ar))) minmax(280px, 1fr); gap: 28px;
+  }
+  .panel.review .tools { margin-top: 0; }
+  .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); grid-template-rows: 1fr auto; gap: 0; align-items: stretch; flex: 1; }
   .panel.done .save-col .btn { margin-top: auto; }
   .main.w-930 .panel.sub, .main.w-930 .panel.review { grid-template-columns: 1fr; }
-  .main.w-930 .panel.sub { grid-template-areas: "head" "stage" "file" "opts"; grid-template-rows: auto; }
-  .main.w-680 .panel.sub .sub-head { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .main.w-680 .panel.sub .head-side { text-align: left; }
-  .main.w-930 .panel.done { grid-template-columns: 1fr; }
+  .main.w-930 .panel.sub { grid-template-areas: "stage" "file" "opts"; grid-template-rows: auto; }
+  .main.w-930 .panel.sub .opts-col { max-width: none; }
+  .main.w-930 .trim-info { max-width: none; }
+  .main.w-930 .panel.done { grid-template-columns: 1fr; grid-template-rows: none; }
+  .main.w-930 .pv { max-width: 520px; }
   .main.w-930 .page { padding: 32px 24px 32px; }
   .main.w-930 .save-col { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; margin-top: 20px; min-height: 0; }
   .main.w-930 .done .ttl { padding-right: 0; }
@@ -406,6 +422,16 @@
   .save-col h3 { margin: 8px 0 8px; font-size: 18px; font-weight: 700; }
   .save-col p { margin: 0 0 18px; font-size: 13.5px; color: #5f5d58; flex: 1; }
   .save-col .art { height: 90px; border-radius: 6px; margin-bottom: 16px; }
+  /* 저장 전 미리보기 (자막 영상 / 자막 파일 / 원본 영상) */
+  .pv { background: #1f2c45; border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+  .pv-scr { position: relative; aspect-ratio: var(--ar); background: #000; cursor: pointer; }
+  .pv-scr canvas, .pv-scr video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; }
+  .pv .pctl { display: flex; align-items: center; gap: 8px; padding: 5px 8px; color: #d6e0f2; font-size: 12px; line-height: 1.2; min-height: 36px; }
+  .pv .pbtn { width: 26px; height: 26px; }
+  .pv .ptime { min-width: 0; font-size: 11.5px; white-space: nowrap; }
+  .pv-srt .pv-scr { background: #f7f9fd; cursor: default; }
+  .pv-srt pre { position: absolute; inset: 0; margin: 0; overflow: auto; padding: 10px 12px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: var(--ink); white-space: pre-wrap; word-break: break-all; }
+  .pv-srt .pctl { color: #9fb0cc; padding-left: 12px; }
   .art.a1 { background: linear-gradient(135deg, #f6b06a, #c4501a 70%, #5a2310); }
   .art.a2 { background: repeating-linear-gradient(180deg, #f4f4f2 0 14px, #fff 14px 28px); box-shadow: inset 0 0 0 1px var(--line); }
   .art.a3 { background: linear-gradient(135deg, #2a2a30, #4a4a52); }
@@ -593,7 +619,7 @@
     <button data-go="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span class="lbl">화면 녹화</span><span class="tag"></span></button>
     <button data-go="trim"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.6 7.6L20 18M8.6 16.4L20 6"/></svg><span class="lbl">길이 편집</span><span class="tag"></span></button>
     <button data-go="sub"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 10.5a2 2 0 1 0 0 3M16 10.5a2 2 0 1 0 0 3"/></svg><span class="lbl">자막 만들기</span><span class="tag"></span></button>
-    <button data-go="review"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg><span class="lbl">최종 검토</span><span class="tag"></span></button>
+    <button data-go="review"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg><span class="lbl">자막 편집</span><span class="tag"></span></button>
     <button data-go="done"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="lbl">저장하기</span><span class="tag"></span></button>
   </nav>
   <button class="side-label" id="recentToggle">최근 항목 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -622,7 +648,7 @@
           <button data-go="home">녹화</button>
           <button data-go="trim">길이 편집</button>
           <button data-go="sub">자막 만들기</button>
-          <button data-go="review">최종 검토</button>
+          <button data-go="review">자막 편집</button>
           <button data-go="done">저장</button>
         </div>
         <button class="pill-btn" id="topImport">영상 불러오기</button>
@@ -659,19 +685,14 @@
   <section class="screen" id="scr-trim">
     <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
-      <div class="bottom-links top">
-        <button class="big-link" data-go="sub" id="trimNext"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>다음 단계 · 자막 만들기</button>
-        <button class="small-link" data-go="home">← 녹화 화면으로</button>
+      <div class="ptitle">
+        <button class="pnav" data-go="home" title="이전 단계: 화면 녹화" aria-label="이전 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        <button class="pnav" data-go="sub" id="trimNext" title="다음 단계: 자막 만들기" aria-label="다음 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <h1>길이 편집</h1><span class="pstep">STEP 02 / 05</span>
+        <p class="pdesc">앞뒤를 자르거나 중간을 나눠서 지울 수 있어요. 원본 영상은 그대로 남아요.</p>
       </div>
       <div class="panel trim">
-        <div class="ttl sub-head">
-          <div><h2>Edit</h2><p class="ko">길이 편집</p></div>
-          <div class="head-side">
-            <div class="stepno">STEP 02 / 05</div>
-            <p class="desc">앞뒤를 자르거나 중간을 나눠서 지울 수 있어요. 원본 영상은 그대로 남아요.</p>
-          </div>
-        </div>
-        <div class="stage big" id="slotTrim"></div>
+        <div class="stage fit" id="slotTrim"></div>
         <div class="trim-info">
           <div class="col-title">LENGTH</div>
           <div class="len-row"><span>원본 길이</span><b id="lenOrig">00:00</b></div>
@@ -712,19 +733,14 @@
   <section class="screen" id="scr-sub">
     <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
-      <div class="bottom-links top">
-        <button class="big-link" data-go="review" id="subNext"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>다음 단계 · 최종 검토</button>
-        <button class="small-link" data-go="trim">← 길이 편집으로</button>
+      <div class="ptitle">
+        <button class="pnav" data-go="trim" title="이전 단계: 길이 편집" aria-label="이전 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        <button class="pnav" data-go="review" id="subNext" title="다음 단계: 자막 편집" aria-label="다음 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <h1>자막 만들기</h1><span class="pstep">STEP 03 / 05</span>
+        <p class="pdesc">영상 속 말을 AI가 받아 적어요. 처음 한 번은 AI 모델을 내려받아요.</p>
       </div>
       <div class="panel sub">
-        <div class="ttl sub-head">
-          <div><h2>Subtitle</h2><p class="ko">자막 만들기</p></div>
-          <div class="head-side">
-            <div class="stepno">STEP 03 / 05</div>
-            <p class="desc">영상 속 말을 AI가 받아 적어요. 처음 한 번은 AI 모델을 내려받아요.</p>
-          </div>
-        </div>
-        <div class="stage big" id="slotSub"></div>
+        <div class="stage fit" id="slotSub"></div>
         <div class="file file-row"><span id="vidName" class="editable" role="button" tabindex="0" title="눌러서 이름 바꾸기">영상</span><small id="vidMeta"></small></div>
         <div class="opts-col">
           <div class="col-title">OPTIONS</div>
@@ -762,20 +778,18 @@
     </div>
   </section>
 
-  <!-- ================= 3. 최종 검토 ================= -->
+  <!-- ================= 4. 자막 편집 ================= -->
   <section class="screen" id="scr-review">
     <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
-      <div class="bottom-links top">
-        <button class="big-link" id="reviewNext"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>다음 단계 · 저장하기</button>
-        <button class="small-link" data-go="sub">← 자막 만들기로</button>
+      <div class="ptitle">
+        <button class="pnav" data-go="sub" title="이전 단계: 자막 만들기" aria-label="이전 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        <button class="pnav" data-go="done" id="reviewNext" title="다음 단계: 저장하기" aria-label="다음 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <h1>자막 편집</h1><span class="pstep">STEP 04 / 05</span>
+        <p class="pdesc">자막 글자와 시간을 고치고, 자막을 끌어 위치를 옮기거나 새 자막을 직접 넣어요. 오른쪽 목록의 자막을 누르면 그 시간으로 이동해요.</p>
       </div>
       <div class="panel review">
         <div class="ttl">
-          <h2>Review</h2>
-          <p class="ko">최종 검토 · 확인하고 고치기</p>
-          <p class="desc">재생하며 자막을 확인하고, 글자와 시간을 바로 고치세요. 오른쪽 목록의 자막 글자를 누르면 그 시간으로 이동해요.</p>
-          <div class="stepno">STEP 04 / 05</div>
           <div class="tools">
             <label>자막 크기<input id="capSize" type="range" min="3" max="9" step="0.5" value="5.5"></label>
             <div class="pos-row">자막 위치<button class="linkbtn" id="btnCapReset">위치 초기화</button></div>
@@ -784,7 +798,7 @@
             <button id="btnFinish" class="btn dark wide">편집 완료</button>
           </div>
         </div>
-        <div class="stage" id="slotReview"></div>
+        <div class="stage fit" id="slotReview"></div>
         <div>
           <div class="col-title">SUBTITLES <span id="cueCount" style="float:right;letter-spacing:0"></span></div>
           <div id="list" class="list"></div>
@@ -801,42 +815,52 @@
   <section class="screen" id="scr-done">
     <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
     <div class="page">
-      <div class="bottom-links top">
-        <button class="big-link" id="doneNew"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 17L17 7M8 7h9v9"/></svg>새로 녹화하기</button>
-        <button class="small-link" data-go="review">← 다시 고치기</button>
+      <div class="ptitle">
+        <button class="pnav" data-go="review" title="이전 단계: 자막 편집" aria-label="이전 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        <button class="pnav" id="doneNext" disabled title="마지막 단계예요" aria-label="다음 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <h1>저장하기</h1><span class="pstep">STEP 05 / 05</span>
       </div>
       <div class="panel done">
         <div class="ttl">
           <div class="check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
           <h2>Done</h2>
           <p class="ko">동영상 편집이 완료되었어요</p>
-          <p class="desc">원하는 형식을 골라 저장하세요. 파일은 다운로드 폴더에 저장돼요.</p>
-          <div class="stepno">STEP 05 / 05</div>
+          <p class="desc">미리보기로 확인하고 원하는 형식을 골라 저장하세요. 파일은 다운로드 폴더에 저장돼요.</p>
         </div>
         <div class="save-col">
-          <div class="art a1"></div>
+          <div class="pv" id="pvBurn">
+            <div class="pv-scr" title="눌러서 재생·멈춤"><canvas></canvas></div>
+            <div class="pctl"><button class="pbtn pplay" aria-label="재생"></button><input type="range" class="pseek" min="0" max="1" step="0.001" value="0" aria-label="재생 위치"><span class="ptime">00:00 / 00:00</span></div>
+            <video playsinline preload="auto" hidden></video>
+          </div>
           <div class="kind">VIDEO</div>
-          <h3>자막 입힌 영상</h3>
+          <h3>자막 영상</h3>
           <p>영상 위에 자막을 새겨서 저장해요. 어디서 틀어도 자막이 보여요. 영상 길이만큼 시간이 걸려요.</p>
           <button id="btnBurn" class="btn orange wide">영상 저장</button>
         </div>
         <div class="save-col">
-          <div class="art a2"></div>
+          <div class="pv pv-srt">
+            <div class="pv-scr"><pre id="srtPv"></pre></div>
+            <div class="pctl"><span id="srtPvInfo"></span></div>
+          </div>
           <div class="kind">SUBTITLE</div>
           <h3>자막 파일 (.srt)</h3>
           <p>자막만 따로 저장해요. 영상과 같은 이름으로 같은 폴더에 두면 플레이어가 자막을 보여 줘요.</p>
           <button id="btnSrt" class="btn dark wide">자막 파일 저장</button>
         </div>
         <div class="save-col">
-          <div class="art a3"></div>
+          <div class="pv" id="pvRaw">
+            <div class="pv-scr" title="눌러서 재생·멈춤"><video playsinline preload="metadata"></video></div>
+            <div class="pctl"><button class="pbtn pplay" aria-label="재생"></button><input type="range" class="pseek" min="0" max="1" step="0.001" value="0" aria-label="재생 위치"><span class="ptime">00:00 / 00:00</span></div>
+          </div>
           <div class="kind">ORIGINAL</div>
           <h3>원본 영상</h3>
-          <p>자막 없이 녹화한 그대로의 영상을 저장해요.</p>
+          <p>자막 없이, 자르기 전 녹화한 그대로의 영상을 저장해요.</p>
           <button id="btnRaw" class="btn light wide">원본 저장</button>
         </div>
         <div class="done-foot">
           <div id="burnBar" class="progress"><i></i></div>
-          <div id="saveStatus" class="status">자막 입힌 영상을 저장하는 동안에는 이 창을 띄워 두세요.</div>
+          <div id="saveStatus" class="status">자막 영상을 저장하는 동안에는 이 창을 띄워 두세요.</div>
           <button id="btnDoneHome" class="btn dark done-home">완료</button>
         </div>
       </div>
@@ -1260,6 +1284,7 @@ function go(name) {
   } else {
     $('preview').pause();
   }
+  if (name !== 'done') pausePreviews();
   state.screen = name;
   $('playerBox').classList.toggle('movable', name === 'review');
   updateNav();
@@ -1273,6 +1298,7 @@ function go(name) {
     laidOut = true;
     sizeCaption(); updateCaption();
     if (name === 'trim') { renderTimeline(); ensureTimelineAssets(); }
+    if (name === 'done') preparePreviews();
   };
   requestAnimationFrame(afterLayout);
   setTimeout(afterLayout, 60);
@@ -1302,6 +1328,8 @@ function updateNav() {
     tag.classList.toggle('live', k === 'home' && !!tags.home);
   });
   document.querySelectorAll('.links button').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
+  // 제목 줄의 ← → : 갈 수 있는 단계만 눌러져요 (자막을 만드는 동안에는 앞으로 못 가요)
+  document.querySelectorAll('.pnav[data-go]').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
   $('subNext').disabled = !n || state.busy;
   $('flRedo').disabled = !state.blob || state.busy;
   ['btnSrt', 'btnBurn'].forEach((id) => ($(id).disabled = !n || state.busy));
@@ -1608,7 +1636,6 @@ async function requestWake() {
 function releaseWake() { try { if (wake) wake.release(); } catch {} wake = null; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (schedule || isRecording())) requestWake(); });
 window.addEventListener('beforeunload', (e) => { if (schedule || isRecording()) { e.preventDefault(); e.returnValue = ''; } });
-$('doneNew').onclick = () => go('home');
 $('btnDoneHome').onclick = () => { if (!state.busy) go('home'); };
 $('vidName').addEventListener('click', (e) => { if (!e.target.closest('.inline-edit')) editCurrentTitle(); });
 $('vidName').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.inline-edit')) { e.preventDefault(); editCurrentTitle(); } });
@@ -1631,7 +1658,7 @@ async function loadVideo(blob, name, knownDuration, hasAudio, item, pcm) {
   state.cues = [];
   renderList();
   setStatus('subStatus', '영상은 내 컴퓨터 밖으로 나가지 않아요.');
-  setStatus('saveStatus', '자막 입힌 영상을 저장하는 동안에는 이 창을 띄워 두세요.');
+  setStatus('saveStatus', '자막 영상을 저장하는 동안에는 이 창을 띄워 두세요.');
   $('btnSub').textContent = '자막 만들기';
   const v = $('preview');
   v.src = state.url;
@@ -1647,6 +1674,9 @@ async function loadVideo(blob, name, knownDuration, hasAudio, item, pcm) {
     const d = await ensureDuration(v);
     if (d) state.duration = d;
   } catch (err) { setStatus('subStatus', err.message, 'warn'); }
+  // 영상 칸을 영상 비율에 딱 맞춰요 (검은 여백 없이)
+  const ar = v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9;
+  document.documentElement.style.setProperty('--ar', ar.toFixed(4));
   // 길이 편집 내용(남길 구간)을 불러오거나, 처음이면 전체 구간
   state.segs = validSegs(item && item.segs) || fullSeg();
   if (state.segs.length && state.segs[0].s > 0) v.currentTime = state.segs[0].s;
@@ -1715,7 +1745,7 @@ function onWorker({ data: m }) {
     setStatus('subStatus', `받아 적는 중… ${Math.round(frac * 100)}%` + (left > 3 ? ` · 약 ${fmtClock(left)} 남음` : ''));
   } else if (m.type === 'done') {
     const n = state.cues.length;
-    finishSub(n ? `자막 ${n}줄을 만들었어요. 최종 검토로 넘어갈게요.` : '알아들을 수 있는 말이 없었어요. 영상에 소리가 녹음됐는지 확인해 주세요.', n ? 'ok' : 'warn');
+    finishSub(n ? `자막 ${n}줄을 만들었어요. 자막 편집로 넘어갈게요.` : '알아들을 수 있는 말이 없었어요. 영상에 소리가 녹음됐는지 확인해 주세요.', n ? 'ok' : 'warn');
     if (n) setTimeout(() => { if (state.screen === 'sub') go('review'); }, 1100);
   } else if (m.type === 'error') {
     finishSub('자막을 만들다 문제가 생겼어요: ' + m.message, 'warn');
@@ -1825,7 +1855,7 @@ function splitText(text, max) {
   return pieces;
 }
 
-// ---------- 3. 최종 검토 ----------
+// ---------- 3. 자막 편집 ----------
 function setCues(cues) {
   state.cues = cues.slice().sort((a, b) => a.start - b.start);
   renderList();
@@ -1881,7 +1911,7 @@ let lastActive = null;
 function updateCaption() {
   const v = $('preview');
   const c = cueAt(v.currentTime || 0);
-  // 최종 검토에서 멈춰 있을 때는 자막이 없는 시간에도 '자막 위치' 표시를 보여 줘서 옮길 수 있게 해요
+  // 자막 편집에서 멈춰 있을 때는 자막이 없는 시간에도 '자막 위치' 표시를 보여 줘서 옮길 수 있게 해요
   const ghost = !c && state.screen === 'review' && v.paused && state.cues.length > 0;
   const txt = c ? c.text : ghost ? '자막 위치' : '';
   if ($('capText').textContent !== txt) $('capText').textContent = txt;
@@ -2022,7 +2052,7 @@ applyCapFont();
 // 길이 편집 (CapCut 방식)
 // 원본 영상은 그대로 두고 '남길 구간(조각)' 목록만 기억해요.
 // 조각: { s, e } = 원본에서 남길 시작·끝(초), { min, max } = 그 조각을 늘릴 수 있는 한계
-// 미리보기·자막 만들기·자막 입힌 영상·.srt 저장이 모두 이 목록을 따라가요.
+// 미리보기·자막 만들기·자막 영상·.srt 저장이 모두 이 목록을 따라가요.
 // =====================================================================
 state.segs = [];
 const MIN_SEG = 0.2;
@@ -2133,7 +2163,7 @@ function updateVidMeta() {
 }
 function computePps() {
   const tot = editedDuration() || 1;
-  const avail = Math.max(200, $('tl').clientWidth - 32);
+  const avail = Math.max(200, $('tl').clientWidth - 34); // 1px라도 넘치면 가로 스크롤 막대가 생겨서 살짝 여유를 둬요
   const fit = avail / tot;
   const max = Math.max(fit, Math.min(200, 16000 / tot));
   TL.pps = fit * Math.pow(max / fit, Number($('tZoom').value) / 100);
@@ -2435,7 +2465,6 @@ $('btnAdd').onclick = () => {
   if (ta) { ta.scrollIntoView({ block: 'nearest' }); ta.focus(); ta.select(); }
 };
 $('btnFinish').onclick = () => go('done');
-$('reviewNext').onclick = () => go('done');
 (function loop() {
   const v = $('preview');
   if (!v.paused) { enforceSegs(); updateCaption(); }
@@ -2448,12 +2477,15 @@ $('reviewNext').onclick = () => go('done');
 // ---------- 4. 저장 ----------
 const baseName = () => state.name.replace(/\.[^.]+$/, '') || '영상';
 $('btnRaw').onclick = () => { download(state.blob, state.name); setStatus('saveStatus', '원본 영상을 저장했어요.', 'ok'); };
-$('btnSrt').onclick = () => {
-  // 저장되는 영상은 편집된 길이라서, 자막 시간도 편집된 영상 기준으로 바꿔요 (잘린 구간에만 있던 자막은 빠져요)
-  const rows = state.cues
+// 저장되는 영상은 편집된 길이라서, 자막 시간도 편집된 영상 기준으로 바꿔요 (잘린 구간에만 있던 자막은 빠져요)
+function srtRows() {
+  return state.cues
     .map((c) => ({ start: srcToEdit(c.start), end: srcToEdit(c.end), text: c.text.trim() }))
     .filter((c) => c.text && c.end - c.start >= 0.05);
-  const srt = rows.map((c, i) => `${i + 1}\n${fmtSrt(c.start)} --> ${fmtSrt(c.end)}\n${c.text}\n`).join('\n');
+}
+const buildSrt = () => srtRows().map((c, i) => `${i + 1}\n${fmtSrt(c.start)} --> ${fmtSrt(c.end)}\n${c.text}\n`).join('\n');
+$('btnSrt').onclick = () => {
+  const srt = buildSrt();
   download(new Blob(['﻿' + srt], { type: 'application/x-subrip;charset=utf-8' }), baseName() + '.srt');
   setStatus('saveStatus', '자막 파일을 저장했어요. 영상과 같은 이름으로 같은 폴더에 두면 플레이어가 자막을 보여 줘요.', 'ok');
 };
@@ -2485,7 +2517,7 @@ function drawCaption(ctx, text, w, h) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const lines = wrapLines(ctx, text.trim(), w * 0.86);
   const lh = fs * 1.45, padX = fs * 0.4;
-  // 최종 검토에서 옮긴 위치 그대로 (영상 밖으로 나가지 않게 가장자리에서 멈춤)
+  // 자막 편집에서 옮긴 위치 그대로 (영상 밖으로 나가지 않게 가장자리에서 멈춤)
   const blockW = Math.max(...lines.map((l) => ctx.measureText(l).width)) + padX * 2;
   const blockH = lines.length * lh;
   const cx = clamp(state.capPos.x * w, blockW / 2, Math.max(blockW / 2, w - blockW / 2));
@@ -2506,6 +2538,7 @@ function drawCaption(ctx, text, w, h) {
 async function exportBurned() {
   if (state.busy) return;
   state.busy = true;
+  pausePreviews();
   ['btnBurn', 'btnSrt', 'btnRaw'].forEach((id) => ($(id).disabled = true));
   setStatus('saveStatus', '자막을 입히는 중… 이 창을 띄워 둔 채 기다려 주세요.');
   setBar('burnBar', 0);
@@ -2516,7 +2549,7 @@ async function exportBurned() {
     await whenMeta(v);
     const dur = (await ensureDuration(v)) || state.duration;
     const w = v.videoWidth & ~1, h = v.videoHeight & ~1;
-    if (!w || !h) throw new Error('화면이 없는 파일(소리만 있는 파일)은 자막 입힌 영상을 만들 수 없어요. 자막 파일(.srt)로 저장해 주세요.');
+    if (!w || !h) throw new Error('화면이 없는 파일(소리만 있는 파일)은 자막 영상을 만들 수 없어요. 자막 파일(.srt)로 저장해 주세요.');
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
@@ -2593,7 +2626,7 @@ async function exportBurned() {
     const blob = new Blob(chunks, { type: mime.split(';')[0] });
     download(blob, `${baseName()}_자막.${extOf(blob.type)}`);
     setBar('burnBar', 1);
-    setStatus('saveStatus', '자막 입힌 영상을 저장했어요. 다운로드 폴더를 확인해 보세요.', 'ok');
+    setStatus('saveStatus', '자막 영상을 저장했어요. 다운로드 폴더를 확인해 보세요.', 'ok');
   } catch (err) {
     setStatus('saveStatus', '저장하지 못했어요: ' + err.message, 'warn');
   } finally {
@@ -2606,6 +2639,93 @@ async function exportBurned() {
   }
 }
 $('btnBurn').onclick = exportBurned;
+
+// ---------- 저장 전 미리보기 ----------
+// 자막 영상: 저장될 영상과 똑같이 (자른 부분 건너뛰고, 같은 글꼴·위치로 자막을 그려서) 보여 줘요.
+// 원본 영상: 자르기 전 녹화 그대로. 자막 파일: 저장될 .srt 내용 그대로.
+function pausePreviews() { document.querySelectorAll('.pv video').forEach((v) => v.pause()); }
+function makePreview(id, edited) {
+  const root = $(id), v = root.querySelector('video'), cv = root.querySelector('canvas');
+  const btn = root.querySelector('.pplay'), seek = root.querySelector('.pseek'), time = root.querySelector('.ptime');
+  const pieces = () => (edited && state.segs.length ? state.segs : [{ s: 0, e: state.duration || v.duration || 0 }]);
+  const total = () => pieces().reduce((a, g) => a + (g.e - g.s), 0);
+  const toEdit = (t) => (edited ? srcToEdit(t) : t);
+  const toSrc = (x) => (edited ? editToSrc(x) : x);
+  let dragging = false;
+  function draw() {
+    if (!cv) return;
+    const W = Math.max(2, Math.round(cv.clientWidth * (window.devicePixelRatio || 1)));
+    const H = Math.max(2, Math.round(W / (v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9)));
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    if (v.readyState >= 2 && v.videoWidth) ctx.drawImage(v, 0, 0, W, H);
+    const c = cueAt(v.currentTime);
+    drawCaption(ctx, c && c.text, W, H);
+  }
+  function sync() {
+    const tot = total(), cur = clamp(toEdit(v.currentTime || 0), 0, tot);
+    time.textContent = `${fmtClock(cur)} / ${fmtClock(tot)}`;
+    if (!dragging) seek.value = tot ? cur / tot : 0;
+    btn.innerHTML = v.paused ? ICON.play : ICON.pause;
+    btn.setAttribute('aria-label', v.paused ? '재생' : '멈춤');
+  }
+  // 재생 중에는 자른 구간을 건너뛰고, 마지막 조각 끝에서 멈춰요
+  function keepIn() {
+    const ps = pieces(), t = v.currentTime;
+    const i = ps.findIndex((g) => t < g.e - 0.02);
+    if (i < 0) { if (!v.paused) v.pause(); return; }
+    if (t < ps[i].s - 0.02) v.currentTime = ps[i].s;
+  }
+  function frame() {
+    if (v.paused) return;
+    keepIn(); draw(); sync();
+    requestAnimationFrame(frame);
+  }
+  function toggle() {
+    if (!v.src) return;
+    if (!v.paused) { v.pause(); return; }
+    const ps = pieces();
+    if (!ps.length) return;
+    if (toEdit(v.currentTime) >= total() - 0.05 || v.ended) v.currentTime = ps[0].s;
+    else keepIn();
+    document.querySelectorAll('.pv video').forEach((o) => { if (o !== v) o.pause(); });
+    $('preview').pause();
+    v.play().catch(() => {});
+  }
+  btn.onclick = toggle;
+  root.querySelector('.pv-scr').onclick = toggle;
+  seek.addEventListener('input', () => { dragging = true; v.currentTime = toSrc(Number(seek.value) * total()); });
+  seek.addEventListener('change', () => { dragging = false; });
+  ['seeked', 'loadeddata', 'pause', 'timeupdate'].forEach((ev) => v.addEventListener(ev, () => { if (!v.paused) keepIn(); draw(); sync(); }));
+  v.addEventListener('play', () => { sync(); requestAnimationFrame(frame); });
+  v.addEventListener('ended', sync);
+  new ResizeObserver(draw).observe(root);
+  return {
+    // 저장하기 화면에 들어올 때마다 지금 영상·자른 구간·자막으로 맞춰요
+    prepare() {
+      if (v.src !== state.url) {
+        v.src = state.url;
+        v.addEventListener('loadedmetadata', () => { v.currentTime = (pieces()[0] || { s: 0 }).s + 0.01; }, { once: true });
+      } else if (v.paused) { keepIn(); draw(); }
+      sync();
+    },
+    draw,
+  };
+}
+const pvBurn = makePreview('pvBurn', true);
+const pvRaw = makePreview('pvRaw', false);
+function preparePreviews() {
+  if (!state.url) return;
+  pvBurn.prepare(); pvRaw.prepare();
+  const f = fontOf(state.capFont);
+  try { document.fonts.load(`${f.weight} 40px ${f.family}`, state.cues.map((c) => c.text).join('')).then(() => pvBurn.draw(), () => {}); } catch {}
+  const n = srtRows().length;
+  $('srtPv').textContent = n ? buildSrt() : '아직 자막이 없어요.';
+  $('srtPvInfo').textContent = n ? `자막 ${n}줄 · 편집한 영상 시간 기준` : '';
+}
+// 글꼴은 늦게 받아질 수 있어서, 받아지면 자막 영상 미리보기를 다시 그려요
+document.fonts && document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => { if (state.screen === 'done') pvBurn.draw(); });
 
 if (location.protocol === 'file:') {
   $('scr-home').insertAdjacentHTML('afterbegin',
