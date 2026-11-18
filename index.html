@@ -395,8 +395,10 @@
   .main.w-930 .panel.review { grid-template-columns: 1fr; grid-template-areas: "stage" "tools" "list"; grid-template-rows: auto; }
   .main.w-930 .rv-list-in { position: static; }
   .main.w-930 .rv-list .list { max-height: 50vh; }
-  .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); grid-template-rows: 1fr auto; gap: 0; align-items: stretch; flex: 1; }
-  .panel.done .save-col .btn { margin-top: auto; }
+  /* 저장하기: 늘리지 않고 남은 공간의 정가운데에 */
+  .panel.done { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto; gap: 0; align-items: stretch; margin: auto 0; }
+  .panel.done .save-col > .btn, .panel.done .save-col .btn-stack { margin-top: auto; }
+  .btn-stack { display: flex; flex-direction: column; gap: 8px; }
   .main.w-930 .panel.sub { grid-template-columns: 1fr; }
   .main.w-930 .panel.sub { grid-template-areas: "stage" "file" "opts"; grid-template-rows: auto; }
   .main.w-930 .panel.sub .opts-col { max-width: none; }
@@ -483,8 +485,7 @@
   .pv .pctl { display: flex; align-items: center; gap: 8px; padding: 5px 8px; color: #d6e0f2; font-size: 12px; line-height: 1.2; min-height: 36px; }
   .pv .pbtn { width: 26px; height: 26px; }
   .pv .ptime { min-width: 0; font-size: 11.5px; white-space: nowrap; }
-  .pv-srt .pv-scr { background: #f7f9fd; cursor: default; }
-  .pv-srt pre { position: absolute; inset: 0; margin: 0; overflow: auto; padding: 10px 12px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: var(--ink); white-space: pre-wrap; word-break: break-all; }
+  .pv-srt .pv-scr { background: #fff; cursor: default; }
   .pv-srt .pctl { color: #9fb0cc; padding-left: 12px; }
   .art.a1 { background: linear-gradient(135deg, #f6b06a, #c4501a 70%, #5a2310); }
   .art.a2 { background: repeating-linear-gradient(180deg, #f4f4f2 0 14px, #fff 14px 28px); box-shadow: inset 0 0 0 1px var(--line); }
@@ -892,13 +893,16 @@
         </div>
         <div class="save-col">
           <div class="pv pv-srt">
-            <div class="pv-scr"><pre id="srtPv"></pre></div>
+            <div class="pv-scr"></div>
             <div class="pctl"><span id="srtPvInfo"></span></div>
           </div>
           <div class="kind">SUBTITLE</div>
-          <h3>자막 파일 (.srt)</h3>
-          <p>자막만 따로 저장해요. 영상과 같은 이름으로 같은 폴더에 두면 플레이어가 자막을 보여 줘요.</p>
-          <button id="btnSrt" class="btn dark wide">자막 파일 저장</button>
+          <h3>자막 파일</h3>
+          <p>자막 글자를 시간과 함께 문서로 저장해요. 워드나 메모장으로 바로 열 수 있어요.</p>
+          <div class="btn-stack">
+            <button id="btnDocx" class="btn dark wide">워드로 저장</button>
+            <button id="btnTxt" class="btn light wide">메모장으로 저장</button>
+          </div>
         </div>
         <div class="save-col">
           <div class="pv" id="pvRaw">
@@ -1383,7 +1387,7 @@ function updateNav() {
   // 제목 줄의 ← → : 갈 수 있는 단계만 눌러져요 (자막을 만드는 동안에는 앞으로 못 가요)
   document.querySelectorAll('.pnav[data-go]').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
   $('subNext').disabled = !n || state.busy;
-  ['btnSrt', 'btnBurn'].forEach((id) => ($(id).disabled = !n || state.busy));
+  ['btnDocx', 'btnTxt', 'btnBurn'].forEach((id) => ($(id).disabled = !n || state.busy));
   renderRecents();
 }
 function closeSide() {} // 사이드바는 항상 옆에 붙어 있어요 (예전 '떠 있는 메뉴' 방식은 없앴어요)
@@ -2533,12 +2537,73 @@ function srtRows() {
     .map((c) => ({ start: srcToEdit(c.start), end: srcToEdit(c.end), text: c.text.trim() }))
     .filter((c) => c.text && c.end - c.start >= 0.05);
 }
-const buildSrt = () => srtRows().map((c, i) => `${i + 1}\n${fmtSrt(c.start)} --> ${fmtSrt(c.end)}\n${c.text}\n`).join('\n');
-$('btnSrt').onclick = () => {
-  const srt = buildSrt();
-  download(new Blob(['﻿' + srt], { type: 'application/x-subrip;charset=utf-8' }), baseName() + '.srt');
-  setStatus('saveStatus', '자막 파일을 저장했어요. 영상과 같은 이름으로 같은 폴더에 두면 플레이어가 자막을 보여 줘요.', 'ok');
+// 자막 파일은 누구나 바로 열 수 있게 워드(.docx)나 메모장(.txt)으로 줘요. 한 줄에 "시간  자막 글자".
+const cueLine = (c) => `${fmtClock(c.start)} ~ ${fmtClock(c.end)}`;
+$('btnTxt').onclick = () => {
+  const rows = srtRows();
+  const body = [baseName() + ' 자막', '', ...rows.map((c) => `${cueLine(c)}   ${c.text.replace(/\s*\n\s*/g, ' ')}`)].join('\r\n') + '\r\n';
+  download(new Blob(['﻿' + body], { type: 'text/plain;charset=utf-8' }), baseName() + '_자막.txt');
+  setStatus('saveStatus', '메모장 파일(.txt)로 자막을 저장했어요. 다운로드 폴더에서 열어 보세요.', 'ok');
 };
+$('btnDocx').onclick = () => {
+  download(makeDocx(baseName() + ' 자막', srtRows()), baseName() + '_자막.docx');
+  setStatus('saveStatus', '워드 파일(.docx)로 자막을 저장했어요. 다운로드 폴더에서 열어 보세요.', 'ok');
+};
+
+// ----- 워드(.docx) 파일 만들기: 라이브러리 없이 최소한의 워드 문서를 압축 파일(zip) 형식으로 묶어요 -----
+const xmlEsc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function makeDocx(title, rows) {
+  const font = '<w:rFonts w:ascii="맑은 고딕" w:eastAsia="맑은 고딕" w:hAnsi="맑은 고딕"/>';
+  const run = (text, extra) => `<w:r><w:rPr>${font}${extra || ''}</w:rPr>` +
+    String(text).split('\n').map((t, i) => (i ? '<w:br/>' : '') + `<w:t xml:space="preserve">${xmlEsc(t)}</w:t>`).join('') + '</w:r>';
+  const paras = [
+    `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr>${run(title, '<w:b/><w:sz w:val="32"/>')}</w:p>`,
+    ...rows.map((c) => `<w:p><w:pPr><w:spacing w:after="120"/></w:pPr>${run(cueLine(c), '<w:color w:val="7A8AA6"/><w:sz w:val="20"/>')}` +
+      `<w:r><w:tab/></w:r>${run(c.text, '<w:sz w:val="22"/>')}</w:p>`),
+  ];
+  if (!rows.length) paras.push(`<w:p>${run('자막이 없어요.')}</w:p>`);
+  const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const files = {
+    '[Content_Types].xml': head + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+    '_rels/.rels': head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+    'word/document.xml': head + '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' +
+      paras.join('') +
+      '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>' +
+      '</w:body></w:document>',
+  };
+  return new Blob([zipStore(files)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+// 압축하지 않고 묶기만 하는 zip (워드 문서는 이 형식이면 충분해요)
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+function zipStore(files) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const [name, text] of Object.entries(files)) {
+    const nm = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, 0, true); lh.setUint16(12, 33, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), nm, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(10, 0, true); ch.setUint16(12, 0, true); ch.setUint16(14, 33, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, nm.length, true);
+    ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), nm);
+    offset += 30 + nm.length + data.length;
+  }
+  const cdSize = central.reduce((a, p) => a + p.length, 0), count = Object.keys(files).length;
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, count, true); end.setUint16(10, count, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)]);
+}
 
 function wrapLines(ctx, text, maxW) {
   const lines = [];
@@ -2589,7 +2654,7 @@ async function exportBurned() {
   if (state.busy) return;
   state.busy = true;
   pausePreviews();
-  ['btnBurn', 'btnSrt', 'btnRaw'].forEach((id) => ($(id).disabled = true));
+  ['btnBurn', 'btnDocx', 'btnTxt', 'btnRaw'].forEach((id) => ($(id).disabled = true));
   setStatus('saveStatus', '자막을 입히는 중… 이 창을 띄워 둔 채 기다려 주세요.');
   setBar('burnBar', 0);
   const v = document.createElement('video');
@@ -2599,7 +2664,7 @@ async function exportBurned() {
     await whenMeta(v);
     const dur = (await ensureDuration(v)) || state.duration;
     const w = v.videoWidth & ~1, h = v.videoHeight & ~1;
-    if (!w || !h) throw new Error('화면이 없는 파일(소리만 있는 파일)은 자막 영상을 만들 수 없어요. 자막 파일(.srt)로 저장해 주세요.');
+    if (!w || !h) throw new Error('화면이 없는 파일(소리만 있는 파일)은 자막 영상을 만들 수 없어요. 자막 파일(워드·메모장)로 저장해 주세요.');
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
@@ -2738,7 +2803,7 @@ document.querySelectorAll('.vsplit').forEach((sp) => {
 
 // ---------- 저장 전 미리보기 ----------
 // 자막 영상: 저장될 영상과 똑같이 (자른 부분 건너뛰고, 같은 글꼴·위치로 자막을 그려서) 보여 줘요.
-// 원본 영상: 자르기 전 녹화 그대로. 자막 파일: 저장될 .srt 내용 그대로.
+// 원본 영상: 자르기 전 녹화 그대로. 자막 파일 칸은 흰 여백(자막 줄 수만 표시).
 function pausePreviews() { document.querySelectorAll('.pv video').forEach((v) => v.pause()); }
 function makePreview(id, edited) {
   const root = $(id), v = root.querySelector('video'), cv = root.querySelector('canvas');
@@ -2817,8 +2882,7 @@ function preparePreviews() {
   const f = fontOf(state.capFont);
   try { document.fonts.load(`${f.weight} 40px ${f.family}`, state.cues.map((c) => c.text).join('')).then(() => pvBurn.draw(), () => {}); } catch {}
   const n = srtRows().length;
-  $('srtPv').textContent = n ? buildSrt() : '아직 자막이 없어요.';
-  $('srtPvInfo').textContent = n ? `자막 ${n}줄 · 편집한 영상 시간 기준` : '';
+  $('srtPvInfo').textContent = n ? `자막 ${n}줄 · 편집한 영상 시간 기준` : '아직 자막이 없어요';
 }
 // 글꼴은 늦게 받아질 수 있어서, 받아지면 자막 영상 미리보기를 다시 그려요
 document.fonts && document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => { if (state.screen === 'done') pvBurn.draw(); });
