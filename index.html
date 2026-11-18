@@ -607,8 +607,13 @@
   .file .editable:hover, .file .editable:focus-visible { background: #eef3fa; }
 
   /* 하늘 배경: 옅은 하늘 사진 (assets/sky.jpg). 화면 비율이 달라 사진의 일부를 잘라서 채워요 */
-  .scene .sky { background: #a9cbee url("assets/sky.jpg") center 35% / cover no-repeat; }
-  .scene .sky::before, .scene .sky::after { content: none; }
+  /* 쨍한 파랑 대신 연한 하늘색(소프트 블루): 사진의 채도를 낮추고 옅은 하늘색 막을 한 겹 씌워요 */
+  .scene .sky { background: #c6daf4 url("assets/sky.jpg") center 35% / cover no-repeat; filter: saturate(.55) brightness(1.07); }
+  .scene .sky::before { content: none; }
+  .scene .sky::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(226,237,251,.38) 0%, rgba(236,243,252,.5) 100%);
+  }
   .scene .stars, .scene .grain, .scene .clouds { display: none; }
   /* 해: 왼쪽 위 (녹화 중에는 붉게 바뀌어 녹화 중임을 알려요) */
   .scene .orb { left: 2.5%; top: 3%; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,.45) 0%, rgba(255,255,255,.2) 30%, rgba(255,255,255,0) 70%); filter: blur(4px); }
@@ -616,6 +621,7 @@
   .recording .scene .orb { background: radial-gradient(circle, #ffd6d0 0%, #ff7a6c 30%, rgba(255,75,62,.45) 52%, transparent 72%); }
   .scene .clouds { position: absolute; left: -3%; width: 106%; bottom: -40px; height: 48%; filter: blur(9px); }
   .scene.blur .sky, .scene.blur .orb, .scene.blur .clouds { filter: blur(24px); }
+  .scene.blur .sky { filter: blur(24px) saturate(.55) brightness(1.07); }
   /* 단계 화면은 같은 하늘을 흐리고 옅게 깔아서 패널과 글자가 잘 보이게 */
   .scene.blur::after { background: rgba(238, 244, 252, .5); }
 
