@@ -250,7 +250,7 @@
   .ptitle h1 { margin: 0 0 0 8px; font-size: 26px; font-weight: 500; letter-spacing: -.01em; color: var(--ink); line-height: 1.2; }
   .ptitle .pstep { margin-left: 8px; font-size: 11.5px; letter-spacing: .14em; color: #5f7598; }
   /* 설명은 한 문장씩 줄을 나눠요 (문장 중간에서 끊기지 않게) */
-  .ptitle .pdesc { margin: 0 0 0 auto; max-width: 620px; font-size: 13px; line-height: 1.55; color: #243c66; text-align: right; word-break: keep-all; }
+  .ptitle .pdesc { margin: 0 0 0 auto; max-width: 620px; font-size: 13px; line-height: 1.55; color: #4d6288; text-align: right; word-break: keep-all; }
   .ptitle .pdesc span { display: block; white-space: nowrap; }
   .main.w-680 .ptitle .pdesc span { white-space: normal; }
   .main.w-930 .ptitle .pdesc { flex-basis: 100%; margin: 2px 0 0; max-width: none; text-align: left; }
@@ -606,49 +606,47 @@
   .recent .r .del:hover, .recent .r .ren:hover { background: #d3dff0; }
   .file .editable:hover, .file .editable:focus-visible { background: #eef3fa; }
 
-  /* 하늘 배경: 옅은 하늘 사진 (assets/sky.jpg). 화면 비율이 달라 사진의 일부를 잘라서 채워요 */
-  /* 연한 하늘색(소프트 블루)이되 맑은 날 느낌: 채도는 살짝만 낮추고,
-     위쪽은 맑은 하늘색 → 아래쪽은 환한 흰빛 그라데이션 + 왼쪽 위 따스한 햇살을 덧씌워요 */
-  .scene .sky { background: #c6daf4 url("assets/sky.jpg") center 35% / cover no-repeat; filter: saturate(.8) brightness(1.06); }
-  .scene .sky::before { content: none; }
-  .scene .sky::after {
-    content: ""; position: absolute; inset: 0; pointer-events: none;
+  /* 하늘 배경: 밝은 하늘 + 부드러운 빛 곡선 + 아래쪽 구름 */
+  .scene .sky {
     background:
-      radial-gradient(60% 70% at 6% 0%, rgba(255,250,232,.6) 0%, rgba(255,250,232,.22) 40%, rgba(255,250,232,0) 72%),
-      linear-gradient(180deg, rgba(160,205,250,.28) 0%, rgba(200,228,252,.14) 45%, rgba(246,251,255,.42) 100%);
+      radial-gradient(60% 55% at 88% 22%, rgba(255,255,255,.6), transparent 70%),
+      radial-gradient(40% 35% at 12% 18%, rgba(255,255,255,.35), transparent 70%),
+      linear-gradient(180deg, #c6daf4 0%, #d3e3f7 42%, #e2ecf9 72%, #eef4fc 100%);
   }
-  .scene .stars, .scene .grain, .scene .clouds { display: none; }
-  /* 해: 왼쪽 위 (녹화 중에는 붉게 바뀌어 녹화 중임을 알려요) */
-  .scene .orb { left: 2.5%; top: 3%; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,.45) 0%, rgba(255,255,255,.2) 30%, rgba(255,255,255,0) 70%); filter: blur(4px); }
+  .scene .sky::before, .scene .sky::after {
+    content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,255,255,.38), rgba(255,255,255,0));
+  }
+  .scene .sky::before { width: 120%; height: 90%; left: -55%; top: 10%; transform: rotate(-12deg); }
+  .scene .sky::after { width: 90%; height: 80%; right: -35%; top: -5%; transform: rotate(18deg); }
+  .scene .stars, .scene .grain { display: none; }
+  .scene .orb { background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,.55) 32%, rgba(255,255,255,0) 70%); filter: blur(4px); }
   .scene .orb::after { background: radial-gradient(circle, rgba(255,255,255,.35), transparent 60%); }
   .recording .scene .orb { background: radial-gradient(circle, #ffd6d0 0%, #ff7a6c 30%, rgba(255,75,62,.45) 52%, transparent 72%); }
   .scene .clouds { position: absolute; left: -3%; width: 106%; bottom: -40px; height: 48%; filter: blur(9px); }
   .scene.blur .sky, .scene.blur .orb, .scene.blur .clouds { filter: blur(24px); }
-  .scene.blur .sky { filter: blur(24px) saturate(.8) brightness(1.06); }
-  /* 단계 화면은 같은 하늘을 흐리고 옅게 깔아서 패널과 글자가 잘 보이게 */
-  .scene.blur::after { background: rgba(238, 244, 252, .5); }
+  .scene.blur::after { background: rgba(238, 244, 252, .28); }
 
   /* 첫 화면 글자·버튼 */
   .logo { color: var(--ink); }
   .logo i { background: var(--orange); box-shadow: 0 0 12px rgba(63,116,208,.55); }
-  /* 옅은 하늘이라 메뉴 글자는 진한 남색 (흰 구름 위에서도 보이게 살짝 흰 테두리 빛) */
-  .links button { color: #1f3a66; text-shadow: 0 0 8px rgba(255,255,255,.7); }
-  .links button:hover:not(:disabled) { color: #0f2448; }
-  .links button:disabled { color: rgba(31,58,102,.45); }
+  .links button { color: #33496f; }
+  .links button:hover:not(:disabled) { color: var(--ink); }
+  .links button:disabled { color: rgba(51,73,111,.35); }
   .pill-btn { background: var(--orange); border-color: var(--orange); color: #fff; backdrop-filter: none; box-shadow: 0 6px 16px rgba(63,116,208,.25); }
   .pill-btn:hover { background: #3366c2; }
-  .eyebrow { color: #24406e; }
-  .headline { color: #13254a; }
-  .headline em { color: #ffffff; text-shadow: 0 2px 18px rgba(20,60,140,.35); }
-  .lead { color: #1d3357; }
+  .eyebrow { color: #5f7598; }
+  .headline { color: #1b2a4a; }
+  .headline em { background: linear-gradient(90deg, #4f86e0, #3a6cc8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { color: #3f5274; }
   .btn.orange { background: linear-gradient(135deg, #5b8fe2, #3d71cf); color: #fff; box-shadow: 0 8px 20px rgba(61,113,207,.25); }
-  .btn.ghost { color: #2f62c2; background: rgba(255,255,255,.78); box-shadow: inset 0 0 0 1.5px #3d71cf; }
-  .btn.ghost:hover { background: #fff; }
+  .btn.ghost { color: #3d71cf; background: rgba(255,255,255,.4); box-shadow: inset 0 0 0 1.5px #3d71cf; }
+  .btn.ghost:hover { background: rgba(255,255,255,.7); }
   .rec-line { color: #3f5274; }
   .timer { color: var(--ink); }
   .chip { color: #33496f; border-color: rgba(63,116,208,.18); background: rgba(255,255,255,.55); }
   .chip b { color: var(--ink); }
-  .steps-rail span { color: rgba(29,43,69,.45); }
+  .steps-rail span { color: rgba(29,43,69,.38); }
   .steps-rail span.on { color: var(--ink); }
 
   /* 최근 작업 */
@@ -733,6 +731,7 @@
     <div class="hero">
       <div class="scene">
         <div class="sky"></div><div class="stars"></div><div class="orb"></div>
+        <svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="330" cy="290" rx="190" ry="80"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="1080" cy="290" rx="200" ry="75"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="260" cy="365" rx="220" ry="90"/><ellipse cx="520" cy="392" rx="260" ry="80"/><ellipse cx="820" cy="398" rx="300" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/><circle cx="170" cy="282" r="70"/><circle cx="1330" cy="248" r="88"/><circle cx="1200" cy="300" r="60"/><circle cx="395" cy="320" r="55"/></g></svg>
         <div class="grain"></div>
       </div>
       <div class="topbar">
