@@ -254,7 +254,7 @@
   .stage.fit { background: none; padding: 0; min-height: 0; display: block; border-radius: 0; }
   /* 영상 둘레에 어두운 테두리를 둘러서, 흰 화면을 녹화해도 영상 경계가 보이게 (자막 위치 계산은 테두리 안쪽 기준이라 그대로) */
   .stage.fit .player {
-    display: block; width: min(100%, calc(var(--cap) * var(--ar))); max-width: 100%; margin: 0 auto; background: #1f2c45;
+    display: block; width: min(100%, var(--vcol, calc(var(--cap) * var(--ar)))); max-width: 100%; margin: 0 auto; background: #1f2c45;
     border: 6px solid #1f2c45; border-bottom: 0; border-radius: 8px; box-shadow: 0 8px 22px rgba(25,45,85,.18);
   }
   .stage.fit .player:fullscreen { border: 0; border-radius: 0; box-shadow: none; }
@@ -266,11 +266,21 @@
   /* 자막 만들기 패널: 큰 영상 / 파일 정보, 오른쪽에 OPTIONS */
   .panel.sub {
     --cap: max(240px, calc(100vh - 220px));
-    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(270px, 1fr);
-    grid-template-areas: "stage opts" "file opts";
+    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(270px, 1fr);
+    grid-template-areas: "stage split opts" "file split opts";
     grid-template-rows: auto 1fr;
-    column-gap: 28px; row-gap: 12px;
+    column-gap: 4px; row-gap: 12px;
   }
+  /* 영상 칸 너비: 기본은 창 높이에 맞춘 크기, 사용자가 손잡이를 끌면 그 비율로 */
+  .panel.sub, .panel.trim, .panel.review { --vcol: calc(var(--cap) * var(--ar)); }
+  .panel.sized { --vcol: calc(var(--vwr) * 100%); }
+  .panel.sized .stage.fit .player { width: 100%; }
+  .vsplit { grid-area: split; position: relative; cursor: col-resize; touch-action: none; align-self: stretch; outline: none; }
+  .vsplit::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; border-radius: 2px; background: transparent; transition: background .15s; }
+  .vsplit::after { content: ""; position: absolute; left: 50%; top: 50%; width: 4px; height: 38px; margin: -19px 0 0 -2px; border-radius: 3px; background: #c8d4e8; transition: background .15s; }
+  .vsplit:hover::before, .vsplit.drag::before, .vsplit:focus-visible::before { background: rgba(63,116,208,.35); }
+  .vsplit:hover::after, .vsplit.drag::after, .vsplit:focus-visible::after { background: var(--orange); }
+  .main.w-930 .vsplit { display: none; }
   .panel.sub .stage { grid-area: stage; }
   .panel.sub .file-row { grid-area: file; }
   .panel.sub .opts-col { grid-area: opts; max-width: 360px; }
@@ -298,9 +308,9 @@
   /* ---------- 길이 편집 패널 ---------- */
   .panel.trim {
     --cap: max(220px, calc(100vh - 372px));
-    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(240px, 1fr);
-    grid-template-areas: "stage info" "tl tl";
-    column-gap: 28px; row-gap: 12px;
+    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(240px, 1fr);
+    grid-template-areas: "stage split info" "tl tl tl";
+    column-gap: 4px; row-gap: 12px;
   }
   .panel.trim .stage { grid-area: stage; }
   .trim-info { grid-area: info; display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
@@ -346,9 +356,9 @@
   /* 자막 편집: ① 영상(왼쪽 위) ② 자막 목록(오른쪽, 위아래 끝까지) ③ 도구(영상 아래) */
   .panel.review {
     --cap: max(220px, calc(100vh - 262px));
-    grid-template-columns: minmax(0, calc(var(--cap) * var(--ar))) minmax(340px, 1fr);
-    grid-template-areas: "stage list" "tools list";
-    grid-template-rows: 1fr auto; column-gap: 28px; row-gap: 12px; align-items: stretch;
+    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(340px, 1fr);
+    grid-template-areas: "stage split list" "tools split list";
+    grid-template-rows: 1fr auto; column-gap: 4px; row-gap: 12px; align-items: stretch;
   }
   .panel.review .stage { grid-area: stage; align-self: start; }
   .rv-list { grid-area: list; position: relative; min-height: 240px; }
@@ -719,6 +729,7 @@
       </div>
       <div class="panel trim">
         <div class="stage fit" id="slotTrim"></div>
+        <div class="vsplit" data-key="trim" data-min="240" role="separator" aria-orientation="vertical" aria-label="영상 크기 조절" tabindex="0" title="끌어서 영상 크기 조절 · 두 번 누르면 기본 크기"></div>
         <div class="trim-info">
           <div class="col-title">LENGTH</div>
           <div class="len-row"><span>원본 길이</span><b id="lenOrig">00:00</b></div>
@@ -767,6 +778,7 @@
       </div>
       <div class="panel sub">
         <div class="stage fit" id="slotSub"></div>
+        <div class="vsplit" data-key="sub" data-min="270" role="separator" aria-orientation="vertical" aria-label="영상 크기 조절" tabindex="0" title="끌어서 영상 크기 조절 · 두 번 누르면 기본 크기"></div>
         <div class="file file-row"><span id="vidName" class="editable" role="button" tabindex="0" title="눌러서 이름 바꾸기">영상</span><small id="vidMeta"></small></div>
         <div class="opts-col">
           <div class="col-title">OPTIONS</div>
@@ -813,6 +825,7 @@
       <!-- ① 영상(왼쪽 위) ② 자막 목록(오른쪽) ③ 자막 크기·위치·추가 도구(영상 아래) -->
       <div class="panel review">
         <div class="stage fit" id="slotReview"></div>
+        <div class="vsplit" data-key="review" data-min="340" role="separator" aria-orientation="vertical" aria-label="영상과 자막 목록 크기 조절" tabindex="0" title="끌어서 영상·자막 목록 크기 조절 · 두 번 누르면 기본 크기"></div>
         <div class="rv-list">
           <div class="rv-list-in">
             <div class="col-title">SUBTITLES <span id="cueCount" style="float:right;letter-spacing:0"></span></div>
@@ -2660,6 +2673,52 @@ async function exportBurned() {
   }
 }
 $('btnBurn').onclick = exportBurned;
+
+// ---------- 영상 칸 크기 조절 (영상과 옆 칸 사이 손잡이) ----------
+// 기본 크기는 창 높이에 맞춘 값이고, 끌면 패널 너비에 대한 비율로 기억해요 (단계마다 따로). 두 번 누르면 기본 크기로.
+const VW_KEY = 'rc-vw';
+let vwSaved = {};
+try { vwSaved = JSON.parse(localStorage.getItem(VW_KEY) || '{}') || {}; } catch {}
+const saveVw = () => { try { localStorage.setItem(VW_KEY, JSON.stringify(vwSaved)); } catch {} };
+function applyVw(panel, key) {
+  const r = vwSaved[key];
+  panel.classList.toggle('sized', !!r);
+  if (r) panel.style.setProperty('--vwr', r); else panel.style.removeProperty('--vwr');
+}
+document.querySelectorAll('.vsplit').forEach((sp) => {
+  const panel = sp.closest('.panel'), key = sp.dataset.key, stage = panel.querySelector('.stage');
+  const sideMin = Number(sp.dataset.min) || 260;
+  const inner = () => { const cs = getComputedStyle(panel); return panel.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); };
+  const setW = (w) => {
+    const iw = inner();
+    w = clamp(w, 280, iw - 28 - sideMin);
+    vwSaved[key] = +(w / iw).toFixed(4);
+    applyVw(panel, key);
+  };
+  applyVw(panel, key);
+  sp.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    sp.setPointerCapture(e.pointerId);
+    sp.classList.add('drag');
+    const x0 = e.clientX, w0 = stage.getBoundingClientRect().width;
+    const move = (ev) => setW(w0 + ev.clientX - x0);
+    const up = () => {
+      sp.classList.remove('drag');
+      sp.removeEventListener('pointermove', move); sp.removeEventListener('pointerup', up); sp.removeEventListener('pointercancel', up);
+      saveVw();
+      if (key === 'trim') renderTimeline();
+    };
+    sp.addEventListener('pointermove', move); sp.addEventListener('pointerup', up); sp.addEventListener('pointercancel', up);
+  });
+  sp.addEventListener('dblclick', () => { delete vwSaved[key]; applyVw(panel, key); saveVw(); });
+  sp.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault(); e.stopPropagation();
+    setW(stage.getBoundingClientRect().width + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 60 : 20));
+    saveVw();
+  });
+});
 
 // ---------- 저장 전 미리보기 ----------
 // 자막 영상: 저장될 영상과 똑같이 (자른 부분 건너뛰고, 같은 글꼴·위치로 자막을 그려서) 보여 줘요.
