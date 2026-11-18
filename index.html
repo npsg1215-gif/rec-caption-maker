@@ -606,30 +606,16 @@
   .recent .r .del:hover, .recent .r .ren:hover { background: #d3dff0; }
   .file .editable:hover, .file .editable:focus-visible { background: #eef3fa; }
 
-  /* 하늘 배경 (맑은 날 사진 느낌): 오른쪽 위는 짙은 파랑, 아래로 갈수록 밝게, 왼쪽 위에 햇빛 */
-  .scene .sky {
-    background:
-      radial-gradient(34% 46% at 0% 0%, #ffffff 0%, rgba(255,255,255,.8) 16%, rgba(255,255,255,.3) 42%, rgba(255,255,255,0) 72%),
-      radial-gradient(75% 65% at 0% 0%, rgba(214,234,255,.55), rgba(214,234,255,0) 70%),
-      linear-gradient(200deg, #1c5ccd 0%, #2f78df 24%, #4b97ea 50%, #82bdf3 76%, #cbe4fa 100%);
-  }
-  /* 햇살 줄기: 왼쪽 위에서 퍼지는 옅은 빛 */
-  .scene .sky::before {
-    content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: repeating-conic-gradient(from 92deg at 1% 2%, rgba(255,255,255,.18) 0deg 1.4deg, rgba(255,255,255,0) 1.4deg 6deg);
-    -webkit-mask-image: radial-gradient(48% 60% at 0% 0%, #000 0%, rgba(0,0,0,.4) 45%, transparent 80%);
-    mask-image: radial-gradient(48% 60% at 0% 0%, #000 0%, rgba(0,0,0,.4) 45%, transparent 80%);
-  }
-  .scene .sky::after { content: none; }
-  .scene .stars, .scene .grain { display: none; }
+  /* 하늘 배경: 레퍼런스 하늘 사진 그대로 (assets/sky.jpg). 화면 비율이 달라 사진의 일부를 잘라서 채워요 */
+  .scene .sky { background: #4b97ea url("assets/sky.jpg") center top / cover no-repeat; }
+  .scene .sky::before, .scene .sky::after { content: none; }
+  .scene .stars, .scene .grain, .scene .clouds { display: none; }
   /* 해: 왼쪽 위 (녹화 중에는 붉게 바뀌어 녹화 중임을 알려요) */
-  .scene .orb { left: 2.5%; top: 3%; width: 150px; height: 150px; background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,.9) 30%, rgba(255,255,255,0) 70%); filter: blur(4px); }
+  .scene .orb { left: 2.5%; top: 3%; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,.7) 0%, rgba(255,255,255,.35) 30%, rgba(255,255,255,0) 70%); filter: blur(4px); }
   .scene .orb::after { background: radial-gradient(circle, rgba(255,255,255,.35), transparent 60%); }
   .recording .scene .orb { background: radial-gradient(circle, #ffd6d0 0%, #ff7a6c 30%, rgba(255,75,62,.45) 52%, transparent 72%); }
   .scene .clouds { position: absolute; left: -3%; width: 106%; bottom: -40px; height: 48%; filter: blur(9px); }
   .scene.blur .sky, .scene.blur .orb, .scene.blur .clouds { filter: blur(24px); }
-  /* 첫 화면 구름: 사진처럼 몽글몽글한 구름을 왼쪽·오른쪽·아래에 */
-  .scene .clouds2 { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   /* 단계 화면은 같은 하늘을 흐리고 옅게 깔아서 패널과 글자가 잘 보이게 */
   .scene.blur::after { background: rgba(238, 244, 252, .5); }
 
@@ -740,35 +726,6 @@
     <div class="hero">
       <div class="scene">
         <div class="sky"></div><div class="stars"></div><div class="orb"></div>
-        <!-- 몽글몽글한 구름: 큰 구름(cA)·작은 구름(cB)을 여러 곳에 크기를 달리해 배치 (아래쪽 옅은 파랑은 그늘) -->
-        <svg class="clouds2" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <defs>
-            <filter id="cloudSoft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.8"/></filter>
-            <g id="cA">
-              <g fill="#c9dbf3" transform="translate(0 11)"><circle cx="80" cy="108" r="50"/><circle cx="150" cy="80" r="66"/><circle cx="234" cy="70" r="60"/><circle cx="304" cy="95" r="50"/><circle cx="354" cy="118" r="34"/><rect x="38" y="108" width="330" height="44" rx="22"/></g>
-              <g fill="#ffffff"><circle cx="80" cy="108" r="50"/><circle cx="150" cy="80" r="66"/><circle cx="234" cy="70" r="60"/><circle cx="304" cy="95" r="50"/><circle cx="354" cy="118" r="34"/><rect x="38" y="108" width="330" height="44" rx="22"/></g>
-              <g fill="#f2f7fe"><circle cx="160" cy="118" r="40"/><circle cx="250" cy="118" r="36"/></g>
-            </g>
-            <g id="cB">
-              <g fill="#c9dbf3" transform="translate(0 6)"><circle cx="30" cy="45" r="22"/><circle cx="65" cy="32" r="28"/><circle cx="105" cy="38" r="24"/><circle cx="135" cy="48" r="16"/><rect x="15" y="42" width="130" height="20" rx="10"/></g>
-              <g fill="#ffffff"><circle cx="30" cy="45" r="22"/><circle cx="65" cy="32" r="28"/><circle cx="105" cy="38" r="24"/><circle cx="135" cy="48" r="16"/><rect x="15" y="42" width="130" height="20" rx="10"/></g>
-            </g>
-          </defs>
-          <g filter="url(#cloudSoft)">
-            <use href="#cB" transform="translate(-10 250) scale(1.1)"/>
-            <use href="#cA" transform="translate(-70 450) scale(1.05)"/>
-            <use href="#cA" transform="translate(1070 140) scale(.95)"/>
-            <use href="#cB" transform="translate(900 320) scale(.9)"/>
-            <use href="#cA" transform="translate(880 470) scale(1.45)"/>
-            <use href="#cB" transform="translate(560 480) scale(.8)"/>
-            <use href="#cB" transform="translate(660 545) scale(.65)"/>
-            <use href="#cA" transform="translate(-90 760) scale(1.3)"/>
-            <use href="#cA" transform="translate(360 790) scale(1.15)"/>
-            <use href="#cA" transform="translate(780 805) scale(1.05)"/>
-            <use href="#cA" transform="translate(1130 770) scale(1.3)"/>
-            <use href="#cB" transform="translate(300 735) scale(1.2)"/>
-          </g>
-        </svg>
         <div class="grain"></div>
       </div>
       <div class="topbar">
