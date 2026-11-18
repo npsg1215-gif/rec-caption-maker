@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>녹화 자막 메이커</title>
+<title>성북천</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <!-- 자막용 무료 한글 글꼴 (모두 SIL 오픈 폰트 라이선스, 상업적 이용 가능). 글자 파일은 쓸 때만 내려받아요. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -205,6 +205,9 @@
   body:not(.recording) .rec-line:has(#recStatus:empty) { display: none; }
   .chips { margin-top: 14px; }
   .lead { margin: clamp(10px, 2.4vh, 22px) 0 clamp(14px, 3vh, 28px); }
+  /* 한글은 낱말 중간(예: '달아|드려요')에서 줄이 바뀌지 않게 띄어쓰기 자리에서만 줄을 바꿔요 */
+  .hero-body { word-break: keep-all; }
+  .lead { max-width: 560px; } /* 소개 문장이 넓은 화면에서 한 줄로 이어지게 */
   .topbar { padding-top: clamp(14px, 3vh, 26px); padding-bottom: clamp(10px, 2vh, 26px); }
   .rcard { border: 0; background: none; padding: 0; color: #fff; text-align: left; cursor: pointer; min-width: 0; }
   .rthumb {
@@ -246,7 +249,10 @@
   .pnav:disabled { opacity: .35; cursor: default; box-shadow: none; }
   .ptitle h1 { margin: 0 0 0 8px; font-size: 26px; font-weight: 500; letter-spacing: -.01em; color: var(--ink); line-height: 1.2; }
   .ptitle .pstep { margin-left: 8px; font-size: 11.5px; letter-spacing: .14em; color: #5f7598; }
-  .ptitle .pdesc { margin: 0 0 0 auto; max-width: 460px; font-size: 13px; color: #4d6288; text-align: right; }
+  /* 설명은 한 문장씩 줄을 나눠요 (문장 중간에서 끊기지 않게) */
+  .ptitle .pdesc { margin: 0 0 0 auto; max-width: 620px; font-size: 13px; line-height: 1.55; color: #243c66; text-align: right; word-break: keep-all; }
+  .ptitle .pdesc span { display: block; white-space: nowrap; }
+  .main.w-680 .ptitle .pdesc span { white-space: normal; }
   .main.w-930 .ptitle .pdesc { flex-basis: 100%; margin: 2px 0 0; max-width: none; text-align: left; }
 
   /* 영상 칸 = 영상 크기 그대로 (검은 여백 없이 꽉 차게). 창 높이에 맞춰 가장 크게, 아래 내용은 스크롤 없이 보이게 */
@@ -600,48 +606,57 @@
   .recent .r .del:hover, .recent .r .ren:hover { background: #d3dff0; }
   .file .editable:hover, .file .editable:focus-visible { background: #eef3fa; }
 
-  /* 하늘 배경: 밝은 하늘 + 부드러운 빛 곡선 + 아래쪽 구름 */
+  /* 하늘 배경 (맑은 날 사진 느낌): 오른쪽 위는 짙은 파랑, 아래로 갈수록 밝게, 왼쪽 위에 햇빛 */
   .scene .sky {
     background:
-      radial-gradient(60% 55% at 88% 22%, rgba(255,255,255,.6), transparent 70%),
-      radial-gradient(40% 35% at 12% 18%, rgba(255,255,255,.35), transparent 70%),
-      linear-gradient(180deg, #c6daf4 0%, #d3e3f7 42%, #e2ecf9 72%, #eef4fc 100%);
+      radial-gradient(34% 46% at 0% 0%, #ffffff 0%, rgba(255,255,255,.8) 16%, rgba(255,255,255,.3) 42%, rgba(255,255,255,0) 72%),
+      radial-gradient(75% 65% at 0% 0%, rgba(214,234,255,.55), rgba(214,234,255,0) 70%),
+      linear-gradient(200deg, #1c5ccd 0%, #2f78df 24%, #4b97ea 50%, #82bdf3 76%, #cbe4fa 100%);
   }
-  .scene .sky::before, .scene .sky::after {
-    content: ""; position: absolute; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,255,255,.38), rgba(255,255,255,0));
+  /* 햇살 줄기: 왼쪽 위에서 퍼지는 옅은 빛 */
+  .scene .sky::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-conic-gradient(from 92deg at 1% 2%, rgba(255,255,255,.18) 0deg 1.4deg, rgba(255,255,255,0) 1.4deg 6deg);
+    -webkit-mask-image: radial-gradient(48% 60% at 0% 0%, #000 0%, rgba(0,0,0,.4) 45%, transparent 80%);
+    mask-image: radial-gradient(48% 60% at 0% 0%, #000 0%, rgba(0,0,0,.4) 45%, transparent 80%);
   }
-  .scene .sky::before { width: 120%; height: 90%; left: -55%; top: 10%; transform: rotate(-12deg); }
-  .scene .sky::after { width: 90%; height: 80%; right: -35%; top: -5%; transform: rotate(18deg); }
+  .scene .sky::after { content: none; }
   .scene .stars, .scene .grain { display: none; }
-  .scene .orb { background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,.55) 32%, rgba(255,255,255,0) 70%); filter: blur(4px); }
+  /* 해: 왼쪽 위 (녹화 중에는 붉게 바뀌어 녹화 중임을 알려요) */
+  .scene .orb { left: 2.5%; top: 3%; width: 150px; height: 150px; background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,.9) 30%, rgba(255,255,255,0) 70%); filter: blur(4px); }
   .scene .orb::after { background: radial-gradient(circle, rgba(255,255,255,.35), transparent 60%); }
   .recording .scene .orb { background: radial-gradient(circle, #ffd6d0 0%, #ff7a6c 30%, rgba(255,75,62,.45) 52%, transparent 72%); }
   .scene .clouds { position: absolute; left: -3%; width: 106%; bottom: -40px; height: 48%; filter: blur(9px); }
   .scene.blur .sky, .scene.blur .orb, .scene.blur .clouds { filter: blur(24px); }
-  .scene.blur::after { background: rgba(238, 244, 252, .28); }
+  /* 첫 화면 구름: 사진처럼 몽글몽글한 구름을 왼쪽·오른쪽·아래에 */
+  .scene .clouds2 { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  /* 단계 화면은 같은 하늘을 흐리고 옅게 깔아서 패널과 글자가 잘 보이게 */
+  .scene.blur::after { background: rgba(238, 244, 252, .5); }
 
   /* 첫 화면 글자·버튼 */
   .logo { color: var(--ink); }
   .logo i { background: var(--orange); box-shadow: 0 0 12px rgba(63,116,208,.55); }
-  .links button { color: #33496f; }
-  .links button:hover:not(:disabled) { color: var(--ink); }
-  .links button:disabled { color: rgba(51,73,111,.35); }
+  /* 위쪽은 하늘이 짙어서 메뉴 글자는 흰색, 버튼은 흰 바탕 */
+  .links button { color: rgba(255,255,255,.92); text-shadow: 0 1px 6px rgba(15,50,120,.25); }
+  .links button:hover:not(:disabled) { color: #fff; }
+  .links button:disabled { color: rgba(255,255,255,.5); }
   .pill-btn { background: var(--orange); border-color: var(--orange); color: #fff; backdrop-filter: none; box-shadow: 0 6px 16px rgba(63,116,208,.25); }
   .pill-btn:hover { background: #3366c2; }
-  .eyebrow { color: #5f7598; }
-  .headline { color: #1b2a4a; }
-  .headline em { background: linear-gradient(90deg, #4f86e0, #3a6cc8); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .lead { color: #3f5274; }
+  .topbar .pill-btn { background: #fff; border-color: #fff; color: #2f62c2; box-shadow: 0 6px 16px rgba(15,50,120,.18); }
+  .topbar .pill-btn:hover { background: #eef5ff; }
+  .eyebrow { color: #24406e; }
+  .headline { color: #13254a; }
+  .headline em { color: #ffffff; text-shadow: 0 2px 18px rgba(20,60,140,.35); }
+  .lead { color: #1d3357; }
   .btn.orange { background: linear-gradient(135deg, #5b8fe2, #3d71cf); color: #fff; box-shadow: 0 8px 20px rgba(61,113,207,.25); }
-  .btn.ghost { color: #3d71cf; background: rgba(255,255,255,.4); box-shadow: inset 0 0 0 1.5px #3d71cf; }
-  .btn.ghost:hover { background: rgba(255,255,255,.7); }
+  .btn.ghost { color: #2f62c2; background: rgba(255,255,255,.78); box-shadow: inset 0 0 0 1.5px #3d71cf; }
+  .btn.ghost:hover { background: #fff; }
   .rec-line { color: #3f5274; }
   .timer { color: var(--ink); }
   .chip { color: #33496f; border-color: rgba(63,116,208,.18); background: rgba(255,255,255,.55); }
   .chip b { color: var(--ink); }
-  .steps-rail span { color: rgba(29,43,69,.38); }
-  .steps-rail span.on { color: var(--ink); }
+  .steps-rail span { color: rgba(255,255,255,.6); }
+  .steps-rail span.on { color: #fff; }
 
   /* 최근 작업 */
   .strip-head { color: #4d6288; }
@@ -691,7 +706,7 @@
 <!-- ================= 사이드바 ================= -->
 <aside class="side" id="side">
   <div class="side-top">
-    <div class="brand"><i></i><span>녹화 자막 메이커</span></div>
+    <div class="brand"><i></i><span>성북천</span></div>
     <button class="ibtn" id="sideClose" title="사이드바 접기/펴기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
   </div>
   <nav class="nav">
@@ -725,11 +740,39 @@
     <div class="hero">
       <div class="scene">
         <div class="sky"></div><div class="stars"></div><div class="orb"></div>
-        <svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="330" cy="290" rx="190" ry="80"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="1080" cy="290" rx="200" ry="75"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="260" cy="365" rx="220" ry="90"/><ellipse cx="520" cy="392" rx="260" ry="80"/><ellipse cx="820" cy="398" rx="300" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/><circle cx="170" cy="282" r="70"/><circle cx="1330" cy="248" r="88"/><circle cx="1200" cy="300" r="60"/><circle cx="395" cy="320" r="55"/></g></svg>
+        <!-- 몽글몽글한 구름: 큰 구름(cA)·작은 구름(cB)을 여러 곳에 크기를 달리해 배치 (아래쪽 옅은 파랑은 그늘) -->
+        <svg class="clouds2" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <filter id="cloudSoft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.8"/></filter>
+            <g id="cA">
+              <g fill="#c9dbf3" transform="translate(0 11)"><circle cx="80" cy="108" r="50"/><circle cx="150" cy="80" r="66"/><circle cx="234" cy="70" r="60"/><circle cx="304" cy="95" r="50"/><circle cx="354" cy="118" r="34"/><rect x="38" y="108" width="330" height="44" rx="22"/></g>
+              <g fill="#ffffff"><circle cx="80" cy="108" r="50"/><circle cx="150" cy="80" r="66"/><circle cx="234" cy="70" r="60"/><circle cx="304" cy="95" r="50"/><circle cx="354" cy="118" r="34"/><rect x="38" y="108" width="330" height="44" rx="22"/></g>
+              <g fill="#f2f7fe"><circle cx="160" cy="118" r="40"/><circle cx="250" cy="118" r="36"/></g>
+            </g>
+            <g id="cB">
+              <g fill="#c9dbf3" transform="translate(0 6)"><circle cx="30" cy="45" r="22"/><circle cx="65" cy="32" r="28"/><circle cx="105" cy="38" r="24"/><circle cx="135" cy="48" r="16"/><rect x="15" y="42" width="130" height="20" rx="10"/></g>
+              <g fill="#ffffff"><circle cx="30" cy="45" r="22"/><circle cx="65" cy="32" r="28"/><circle cx="105" cy="38" r="24"/><circle cx="135" cy="48" r="16"/><rect x="15" y="42" width="130" height="20" rx="10"/></g>
+            </g>
+          </defs>
+          <g filter="url(#cloudSoft)">
+            <use href="#cB" transform="translate(-10 250) scale(1.1)"/>
+            <use href="#cA" transform="translate(-70 450) scale(1.05)"/>
+            <use href="#cA" transform="translate(1070 140) scale(.95)"/>
+            <use href="#cB" transform="translate(900 320) scale(.9)"/>
+            <use href="#cA" transform="translate(880 470) scale(1.45)"/>
+            <use href="#cB" transform="translate(560 480) scale(.8)"/>
+            <use href="#cB" transform="translate(660 545) scale(.65)"/>
+            <use href="#cA" transform="translate(-90 760) scale(1.3)"/>
+            <use href="#cA" transform="translate(360 790) scale(1.15)"/>
+            <use href="#cA" transform="translate(780 805) scale(1.05)"/>
+            <use href="#cA" transform="translate(1130 770) scale(1.3)"/>
+            <use href="#cB" transform="translate(300 735) scale(1.2)"/>
+          </g>
+        </svg>
         <div class="grain"></div>
       </div>
       <div class="topbar">
-        <div class="logo"><i></i>REC · CAPTION</div>
+        <div class="logo"><i></i>성북천</div>
         <div class="links">
           <button data-go="home">녹화</button>
           <button data-go="trim">길이 편집</button>
@@ -740,9 +783,9 @@
         <button class="pill-btn" id="topImport">영상 불러오기</button>
       </div>
       <div class="hero-body">
-        <div class="eyebrow">SCREEN RECORDER · AI SUBTITLES</div>
-        <h1 class="headline">RECORD.<br>CAPTION.<br><em>REPEAT.</em></h1>
-        <p class="lead">화면과 컴퓨터 소리를 녹화하면, AI가 영상 속 말을 받아 적어 자막을 달아 드려요.</p>
+        <div class="eyebrow">화면 녹화 · AI 자막</div>
+        <h1 class="headline">성북천</h1>
+        <p class="lead">화면과 컴퓨터 소리를 녹화하면, AI가 영상 속 말을 받아 적어 자막을 달아드려요.</p>
         <div class="cta">
           <button id="btnRec" class="btn orange"><span class="dot"></span><span class="lbl">녹화 시작</span></button>
           <button id="btnSchedule" class="btn ghost"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/></svg>예약 녹화</button>
@@ -776,7 +819,7 @@
         <button class="pnav" data-go="home" title="이전 단계: 화면 녹화" aria-label="이전 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
         <button class="pnav" data-go="sub" id="trimNext" title="다음 단계: 자막 만들기" aria-label="다음 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <h1>길이 편집</h1><span class="pstep">STEP 02 / 05</span>
-        <p class="pdesc">앞뒤를 자르거나 중간을 나눠서 지울 수 있어요. 원본 영상은 그대로 남아요.</p>
+        <p class="pdesc"><span>앞뒤를 자르거나 중간을 나눠서 지울 수 있어요.</span><span>원본 영상은 그대로 남아요.</span></p>
       </div>
       <div class="panel trim">
         <div class="stage fit" id="slotTrim"></div>
@@ -825,7 +868,7 @@
         <button class="pnav" data-go="trim" title="이전 단계: 길이 편집" aria-label="이전 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
         <button class="pnav" data-go="review" id="subNext" title="다음 단계: 자막 편집" aria-label="다음 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <h1>자막 만들기</h1><span class="pstep">STEP 03 / 05</span>
-        <p class="pdesc">영상 속 말을 AI가 받아 적어요. 처음 한 번은 AI 모델을 내려받아요.</p>
+        <p class="pdesc"><span>영상 속 말을 AI가 받아 적어요.</span><span>처음 한 번은 AI 모델을 내려받아요.</span></p>
       </div>
       <div class="panel sub">
         <div class="stage fit" id="slotSub"></div>
@@ -871,7 +914,7 @@
         <button class="pnav" data-go="sub" title="이전 단계: 자막 만들기" aria-label="이전 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
         <button class="pnav" data-go="done" id="reviewNext" title="다음 단계: 저장하기" aria-label="다음 단계"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <h1>자막 편집</h1><span class="pstep">STEP 04 / 05</span>
-        <p class="pdesc">자막 글자와 시간을 고치고, 자막을 끌어 위치를 옮기거나 새 자막을 직접 넣어요. 오른쪽 목록의 자막을 누르면 그 시간으로 이동해요.</p>
+        <p class="pdesc"><span>자막 글자와 시간을 고치고, 자막을 끌어 위치를 옮기거나 새 자막을 직접 넣어요.</span><span>오른쪽 목록의 자막을 누르면 그 시간으로 이동해요.</span></p>
       </div>
       <!-- ① 영상(왼쪽 위) ② 자막 목록(오른쪽) ③ 자막 크기·위치·추가 도구(영상 아래) -->
       <div class="panel review">
@@ -962,7 +1005,7 @@
       <div class="ptitle">
         <button class="pnav" data-go="home" title="첫 화면으로" aria-label="첫 화면으로"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
         <h1>실시간 자막</h1><span class="pstep live-badge" id="liveBadge">LIVE</span>
-        <p class="pdesc">컴퓨터에서 나오는 소리(영상·강의·회의)를 바로 자막으로 보여 줘요. 소리는 내 컴퓨터 안에서만 처리돼요.</p>
+        <p class="pdesc"><span>컴퓨터에서 나오는 소리(영상·강의·회의)를 바로 자막으로 보여 줘요.</span><span>소리는 내 컴퓨터 안에서만 처리돼요.</span></p>
       </div>
       <div class="panel live">
         <div class="live-stage" id="liveStage">
@@ -1527,7 +1570,7 @@ $('recentToggle').onclick = () => { recentOpen = !recentOpen; $('recent').style.
 // ---------- 1. 녹화 ----------
 let recorder = null, recStream = null, recStart = 0, timerId = 0, autoStopTimer = 0;
 const isRecording = () => !!(recorder && recorder.state === 'recording');
-const APP_TITLE = '녹화 자막 메이커';
+const APP_TITLE = '성북천';
 
 function setRecUI(on) {
   document.body.classList.toggle('recording', on);
