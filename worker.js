@@ -1,60 +1,10 @@
 // 음성 인식 워커: Whisper 모델을 브라우저 안에서 실행해 자막을 만듭니다.
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
+import { useOpfsCache } from './cache.js';
 
 env.allowLocalModels = false;
-
-// 브라우저 기본 저장소(Cache)는 300MB가 넘는 파일을 못 넣는 경우가 있어서,
-// 모델 파일을 브라우저의 파일 저장 공간(OPFS)에 직접 저장합니다. 한 번 받으면 다시 받지 않아요.
-const opfsCache = {
-  dir: null,
-  async root() {
-    if (!this.dir) {
-      const r = await navigator.storage.getDirectory();
-      this.dir = await r.getDirectoryHandle('models', { create: true });
-    }
-    return this.dir;
-  },
-  name(key) { return String(key).replace(/^https?:\/\//, '').replace(/[^a-zA-Z0-9._-]/g, '_'); },
-  async match(key) {
-    try {
-      const d = await this.root();
-      const n = this.name(key);
-      await d.getFileHandle(n + '.ok'); // 다 받은 파일에만 표시가 있음
-      const f = await (await d.getFileHandle(n)).getFile();
-      return new Response(f, { headers: { 'content-length': String(f.size) } });
-    } catch {
-      return undefined;
-    }
-  },
-  async put(key, response) {
-    const d = await this.root();
-    const n = this.name(key);
-    try { await d.removeEntry(n + '.ok'); } catch {}
-    const fh = await d.getFileHandle(n, { create: true });
-    const h = await fh.createSyncAccessHandle();
-    try {
-      h.truncate(0);
-      const reader = response.body.getReader();
-      let at = 0;
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        h.write(value, { at });
-        at += value.byteLength;
-      }
-      h.flush();
-    } finally {
-      h.close();
-    }
-    await d.getFileHandle(n + '.ok', { create: true });
-  },
-};
-if (navigator.storage && navigator.storage.getDirectory && self.FileSystemFileHandle &&
-    'createSyncAccessHandle' in FileSystemFileHandle.prototype) {
-  env.useBrowserCache = false;
-  env.useCustomCache = true;
-  env.customCache = opfsCache;
-}
+// 모델 파일은 브라우저 파일 저장 공간(OPFS)에 저장해 두고 다시 받지 않아요 (cache.js)
+useOpfsCache(env);
 
 const SR = 16000;
 let asr = null;
