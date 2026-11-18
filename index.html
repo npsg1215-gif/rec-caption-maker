@@ -368,11 +368,14 @@
   .tl-head i { position: absolute; left: -7px; top: 0; width: 14px; height: 16px; background: #fff; border-radius: 3px 3px 7px 7px; pointer-events: auto; cursor: ew-resize; }
   /* 자막 편집: ① 영상(왼쪽 위) ② 자막 목록(오른쪽, 위아래 끝까지) ③ 도구(영상 아래) */
   .panel.review {
-    --cap: max(220px, calc(100vh - 262px));
-    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(320px, 1fr);
-    grid-template-areas: "stage split list" "tools split list";
-    grid-template-rows: 1fr auto; column-gap: 4px; row-gap: 12px; align-items: stretch;
+    --cap: max(220px, calc(100vh - 236px));
+    grid-template-columns: minmax(0, var(--vcol)) 20px minmax(260px, 1fr);
+    grid-template-areas: "stage split list" "tools split list" ". split list";
+    grid-template-rows: auto auto minmax(0, 1fr); column-gap: 4px; row-gap: 10px; align-items: stretch;
   }
+  /* 목록 칸이 좁아져도 자막 글자가 잘 보이게 시간 칸을 조금 줄여요 */
+  .panel.review .cue { grid-template-columns: 58px 1fr 22px; gap: 8px; padding: 10px 2px; }
+  .panel.review .times input { width: 58px; }
   .panel.review .stage { grid-area: stage; align-self: start; }
   .rv-list { grid-area: list; position: relative; min-height: 240px; }
   .rv-list-in { position: absolute; inset: 0; display: flex; flex-direction: column; }
@@ -840,7 +843,7 @@
       <!-- ① 영상(왼쪽 위) ② 자막 목록(오른쪽) ③ 자막 크기·위치·추가 도구(영상 아래) -->
       <div class="panel review">
         <div class="stage fit" id="slotReview"></div>
-        <div class="vsplit" data-key="review" data-min="320" role="separator" aria-orientation="vertical" aria-label="영상과 자막 목록 크기 조절" tabindex="0" title="끌어서 영상·자막 목록 크기 조절 · 두 번 누르면 기본 크기"></div>
+        <div class="vsplit" data-key="review" data-min="260" role="separator" aria-orientation="vertical" aria-label="영상과 자막 목록 크기 조절" tabindex="0" title="끌어서 영상·자막 목록 크기 조절 · 두 번 누르면 기본 크기"></div>
         <div class="rv-list">
           <div class="rv-list-in">
             <div class="col-title">SUBTITLES <span id="cueCount" style="float:right;letter-spacing:0"></span></div>
