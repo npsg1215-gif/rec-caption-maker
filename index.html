@@ -478,6 +478,36 @@
   .save-col h3 { margin: 8px 0 8px; font-size: 18px; font-weight: 700; }
   .save-col p { margin: 0 0 18px; font-size: 13.5px; color: #5f5d58; flex: 1; }
   .save-col .art { height: 90px; border-radius: 6px; margin-bottom: 16px; }
+  /* ---------- 실시간 자막 ---------- */
+  .panel.live {
+    padding: 20px 24px; flex: 1; grid-template-columns: minmax(0, 1fr) 230px;
+    grid-template-areas: "stage opts" "log opts"; grid-template-rows: auto minmax(0, 1fr); column-gap: 28px; row-gap: 14px; align-items: stretch;
+  }
+  .live-stage {
+    grid-area: stage; min-height: 200px; padding: 22px 28px; border-radius: 8px; background: #1f2c45; box-shadow: 0 8px 22px rgba(25,45,85,.18);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .live-now { width: 100%; text-align: center; color: #fff; font-size: clamp(20px, 2.1vw, 30px); line-height: 1.45; font-weight: 600; word-break: keep-all; }
+  .live-now .prev { display: block; color: rgba(255,255,255,.5); font-weight: 500; font-size: .8em; }
+  .live-now .cur { display: block; }
+  .live-now .interim { color: rgba(255,255,255,.72); }
+  .live-idle { color: rgba(255,255,255,.62); font-size: 15px; font-weight: 400; }
+  .live-log-wrap { grid-area: log; position: relative; min-height: 160px; }
+  .live-log-in { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  .live-log { flex: 1; min-height: 0; overflow: auto; }
+  .live-row { display: grid; grid-template-columns: 52px 1fr; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .live-row time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 2px; }
+  .live-opts { grid-area: opts; }
+  .live-opts > .btn + .btn { margin-top: 8px; }
+  .live-save { margin-top: 14px; }
+  .btn.live-on { background: var(--rec); }
+  .live-badge { display: inline-flex; align-items: center; gap: 6px; }
+  .live-badge.on { color: var(--rec); }
+  .live-badge.on::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--rec); animation: blink 1s infinite; }
+  .main.w-930 .panel.live { grid-template-columns: 1fr; grid-template-areas: "stage" "opts" "log"; grid-template-rows: auto; }
+  .main.w-930 .live-log-in { position: static; }
+  .main.w-930 .live-log { max-height: 50vh; }
+
   /* 저장 전 미리보기 (자막 영상 / 자막 파일 / 원본 영상) */
   .pv { background: #1f2c45; border-radius: 8px; overflow: hidden; margin-bottom: 16px; padding: 5px 5px 0; box-shadow: 0 6px 16px rgba(25,45,85,.14); }
   .pv-scr { position: relative; aspect-ratio: var(--ar); background: #000; cursor: pointer; }
@@ -668,6 +698,7 @@
     <button id="navNew"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">새로 녹화</span></button>
     <button id="navImport"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="lbl">영상 불러오기</span></button>
     <button id="navSchedule"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M5 4L2.5 6.5M19 4l2.5 2.5"/></svg><span class="lbl">예약 녹화</span></button>
+    <button id="navLive" data-go="live"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 14h6M7 10.5h10"/></svg><span class="lbl">실시간 자막</span><span class="tag" id="liveTag"></span></button>
   </nav>
   <div class="side-label" style="cursor:default">작업 단계</div>
   <nav class="nav" id="stepNav">
@@ -715,6 +746,7 @@
         <div class="cta">
           <button id="btnRec" class="btn orange"><span class="dot"></span><span class="lbl">녹화 시작</span></button>
           <button id="btnSchedule" class="btn ghost"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/></svg>예약 녹화</button>
+          <button id="btnLiveHome" class="btn ghost" data-go="live"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 14h6M7 10.5h10"/></svg>실시간 자막</button>
           <button id="btnImport" class="btn ghost">영상 불러오기</button>
         </div>
         <div class="sch-card" id="schCard" hidden>
@@ -918,6 +950,48 @@
           <div id="burnBar" class="progress"><i></i></div>
           <div id="saveStatus" class="status">자막 영상을 저장하는 동안에는 이 창을 띄워 두세요.</div>
           <button id="btnDoneHome" class="btn dark done-home">완료</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 실시간 자막 (컴퓨터 소리 → 바로 자막) ================= -->
+  <section class="screen" id="scr-live">
+    <div class="scene blur"><div class="sky"></div><div class="orb"></div><svg class="clouds" viewBox="0 0 1440 420" preserveAspectRatio="none" aria-hidden="true"><g fill="#f3f7ff" opacity=".8"><ellipse cx="120" cy="250" rx="200" ry="95"/><ellipse cx="1290" cy="225" rx="230" ry="110"/><ellipse cx="720" cy="335" rx="420" ry="70"/></g><g fill="#fff"><ellipse cx="40" cy="330" rx="230" ry="110"/><ellipse cx="300" cy="370" rx="240" ry="90"/><ellipse cx="720" cy="398" rx="340" ry="75"/><ellipse cx="1120" cy="372" rx="260" ry="95"/><ellipse cx="1385" cy="320" rx="220" ry="120"/></g></svg></div>
+    <div class="page">
+      <div class="ptitle">
+        <button class="pnav" data-go="home" title="첫 화면으로" aria-label="첫 화면으로"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        <h1>실시간 자막</h1><span class="pstep live-badge" id="liveBadge">LIVE</span>
+        <p class="pdesc">컴퓨터에서 나오는 소리(영상·강의·회의)를 바로 자막으로 보여 줘요. 소리는 내 컴퓨터 안에서만 처리돼요.</p>
+      </div>
+      <div class="panel live">
+        <div class="live-stage" id="liveStage">
+          <div class="live-now" id="liveNow"><span class="live-idle">오른쪽 [실시간 자막 시작]을 누르고, 화면 공유 창에서 "전체 화면"이나 "탭"을 고른 뒤 소리 공유를 켜 주세요.</span></div>
+        </div>
+        <div class="live-log-wrap">
+          <div class="live-log-in">
+            <div class="col-title">받아 적은 내용 <span style="float:right;letter-spacing:0"><span id="liveCount"></span> <button class="linkbtn" id="liveClear" hidden>지우기</button></span></div>
+            <div class="live-log" id="liveLog"><div class="empty">아직 받아 적은 내용이 없어요.</div></div>
+          </div>
+        </div>
+        <div class="opts-col live-opts">
+          <div class="col-title">OPTIONS</div>
+          <div class="field"><label for="liveLang">언어</label><select id="liveLang"></select></div>
+          <div class="field"><label for="liveModel">정확도</label>
+            <select id="liveModel">
+              <option value="onnx-community/whisper-small" selected>보통 (추천) · 약 560MB</option>
+              <option value="onnx-community/whisper-base">빠름 · 약 200MB</option>
+              <option value="onnx-community/whisper-large-v3-turbo">가장 정확 · 약 730MB</option>
+            </select>
+            <div class="model-hint">실시간에는 "보통"을 추천해요. "가장 정확"은 컴퓨터가 느리면 자막이 점점 늦게 나와요.</div>
+          </div>
+          <button id="btnLive" class="btn dark wide">실시간 자막 시작</button>
+          <button id="btnLivePip" class="btn light wide">떠 있는 자막 창 열기</button>
+          <div id="liveStatus" class="status">다른 프로그램 위에 자막을 띄우려면 '떠 있는 자막 창'을 여세요.</div>
+          <div class="btn-stack live-save">
+            <button id="btnLiveDocx" class="btn light wide" disabled>워드로 저장</button>
+            <button id="btnLiveTxt" class="btn light wide" disabled>메모장으로 저장</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1323,7 +1397,7 @@ async function removeItem(id) {
 
 // ---------- 화면 이동 ----------
 function canGo(name) {
-  if (name === 'home') return true;
+  if (name === 'home' || name === 'live') return true;
   if (name === 'trim' || name === 'sub') return !!state.blob;
   if (name === 'review') return state.cues.length > 0;
   if (name === 'done') return !!state.blob && state.cues.length > 0;
@@ -1384,6 +1458,7 @@ function updateNav() {
     tag.classList.toggle('live', k === 'home' && !!tags.home);
   });
   document.querySelectorAll('.links button').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
+  $('navLive').classList.toggle('on', state.screen === 'live');
   // 제목 줄의 ← → : 갈 수 있는 단계만 눌러져요 (자막을 만드는 동안에는 앞으로 못 가요)
   document.querySelectorAll('.pnav[data-go]').forEach((b) => { b.disabled = !canGo(b.dataset.go); });
   $('subNext').disabled = !n || state.busy;
@@ -1468,7 +1543,7 @@ function setRecUI(on) {
 // 녹화하는 동안 소리를 16kHz 모노로 따로 받아 둡니다.
 // 긴 녹화도 영상 전체를 다시 풀지 않고 바로 자막을 만들 수 있어요. (2시간 ≈ 230MB)
 const TAP_CODE = `class Tap extends AudioWorkletProcessor {
-  constructor() { super(); this.buf = new Int16Array(16000); this.n = 0; this.port.onmessage = () => this.flush(); }
+  constructor(o) { super(); this.buf = new Int16Array((o && o.processorOptions && o.processorOptions.chunk) || 16000); this.n = 0; this.port.onmessage = () => this.flush(); }
   flush() { if (this.n) { this.port.postMessage(this.buf.slice(0, this.n)); this.n = 0; } }
   process(inputs, outputs) {
     // 소리가 없을 때 Chrome은 채널을 0개로 넘겨요. 그때도 '무음'으로 채워야 시간이 영상과 어긋나지 않아요.
@@ -1484,7 +1559,8 @@ const TAP_CODE = `class Tap extends AudioWorkletProcessor {
   }
 }
 registerProcessor('pcm-tap', Tap);`;
-async function startTap(stream) {
+// chunk: 몇 샘플마다 넘겨줄지 (녹화는 1초, 실시간 자막은 0.2초)
+async function startTap(stream, chunk = 16000) {
   const track = stream.getAudioTracks()[0];
   if (!track || !window.AudioWorkletNode) return null;
   try {
@@ -1492,7 +1568,7 @@ async function startTap(stream) {
     const url = URL.createObjectURL(new Blob([TAP_CODE], { type: 'text/javascript' }));
     await ctx.audioWorklet.addModule(url);
     URL.revokeObjectURL(url);
-    const node = new AudioWorkletNode(ctx, 'pcm-tap');
+    const node = new AudioWorkletNode(ctx, 'pcm-tap', { processorOptions: { chunk } });
     const tap = { ctx, node, chunks: [], on: false };
     node.port.onmessage = (e) => { if (tap.on) tap.chunks.push(e.data); };
     ctx.createMediaStreamSource(new MediaStream([track])).connect(node);
@@ -1578,6 +1654,7 @@ function beginRecording(stream, tap, opts = {}) {
 }
 async function startRecording() {
   if (state.busy || schedule || isRecording()) return;
+  if (LIVE.on) { setStatus('recStatus', '실시간 자막이 켜져 있어요. 실시간 자막을 끈 뒤 녹화해 주세요.', 'warn'); return; }
   const stream = await acquireStream();
   if (!stream) return;
   const tap = await startTap(stream);
@@ -1690,7 +1767,7 @@ async function requestWake() {
 }
 function releaseWake() { try { if (wake) wake.release(); } catch {} wake = null; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (schedule || isRecording())) requestWake(); });
-window.addEventListener('beforeunload', (e) => { if (schedule || isRecording()) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', (e) => { if (schedule || isRecording() || LIVE.on) { e.preventDefault(); e.returnValue = ''; } });
 $('btnDoneHome').onclick = () => { if (!state.busy) go('home'); };
 $('vidName').addEventListener('click', (e) => { if (!e.target.closest('.inline-edit')) editCurrentTitle(); });
 $('vidName').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.inline-edit')) { e.preventDefault(); editCurrentTitle(); } });
@@ -2539,10 +2616,13 @@ function srtRows() {
 }
 // 자막 파일은 누구나 바로 열 수 있게 워드(.docx)나 메모장(.txt)으로 줘요. 한 줄에 "시간  자막 글자".
 const cueLine = (c) => `${fmtClock(c.start)} ~ ${fmtClock(c.end)}`;
+// 메모장용: 맨 위 제목, 한 줄에 "시작 ~ 끝   글자" (윈도우 줄바꿈, 한글이 안 깨지게 UTF-8 표시 포함)
+function makeTxt(title, rows) {
+  const body = [title, '', ...rows.map((c) => `${cueLine(c)}   ${c.text.replace(/\s*\n\s*/g, ' ')}`)].join('\r\n') + '\r\n';
+  return new Blob(['﻿' + body], { type: 'text/plain;charset=utf-8' });
+}
 $('btnTxt').onclick = () => {
-  const rows = srtRows();
-  const body = [baseName() + ' 자막', '', ...rows.map((c) => `${cueLine(c)}   ${c.text.replace(/\s*\n\s*/g, ' ')}`)].join('\r\n') + '\r\n';
-  download(new Blob(['﻿' + body], { type: 'text/plain;charset=utf-8' }), baseName() + '_자막.txt');
+  download(makeTxt(baseName() + ' 자막', srtRows()), baseName() + '_자막.txt');
   setStatus('saveStatus', '메모장 파일(.txt)로 자막을 저장했어요. 다운로드 폴더에서 열어 보세요.', 'ok');
 };
 $('btnDocx').onclick = () => {
@@ -2886,6 +2966,238 @@ function preparePreviews() {
 }
 // 글꼴은 늦게 받아질 수 있어서, 받아지면 자막 영상 미리보기를 다시 그려요
 document.fonts && document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => { if (state.screen === 'done') pvBurn.draw(); });
+
+// ---------- 실시간 자막 ----------
+// 컴퓨터 소리를 0.2초마다 받아, 말이 멈추는 곳(또는 12초)에서 끊어 AI에 넘겨요 → 확정 자막.
+// 말하는 중에도 1초쯤마다 지금까지의 소리를 미리 받아 적어 흐린 글자로 먼저 보여 줘요.
+// 소리 처리 신호로 움직이기 때문에 다른 탭을 보고 있어도 느려지지 않아요.
+const LSR = 16000, LFRAME = 1600; // 0.1초 = 1프레임
+const LIVE = {
+  on: false, stream: null, tap: null, worker: null, model: '', ready: false,
+  buf: new Float32Array(LSR * 16), len: 0, base: 0, frames: [], offset: 0,
+  id: 0, utt: 0, jobs: new Map(), interimBusy: false, lastInterim: 0, interim: '', pending: [], rows: [], pip: null,
+};
+$('liveLang').innerHTML = $('lang').innerHTML;
+const liveStatus = (t, kind = '') => setStatus('liveStatus', t, kind);
+function liveWorker() {
+  if (LIVE.worker) return LIVE.worker;
+  const w = new Worker('worker.js', { type: 'module' });
+  w.onmessage = onLiveMsg;
+  w.onerror = (e) => liveStatus('AI 모듈을 불러오지 못했어요. 인터넷 연결을 확인해 주세요. (' + (e.message || '') + ')', 'warn');
+  return (LIVE.worker = w);
+}
+// 받은 소리(16비트)를 쌓고, 0.1초마다 소리 크기(RMS)를 기록해요
+function liveIngest(i16) {
+  if (!LIVE.on) return;
+  const need = LIVE.len + i16.length;
+  if (need > LIVE.buf.length) { const nb = new Float32Array(Math.max(need, LIVE.buf.length * 2)); nb.set(LIVE.buf.subarray(0, LIVE.len)); LIVE.buf = nb; }
+  for (let i = 0; i < i16.length; i++) LIVE.buf[LIVE.len + i] = i16[i] / 32768;
+  LIVE.len = need;
+  while ((LIVE.frames.length + 1) * LFRAME <= LIVE.len) {
+    const s = LIVE.frames.length * LFRAME;
+    let e = 0;
+    for (let i = s; i < s + LFRAME; i++) e += LIVE.buf[i] * LIVE.buf[i];
+    LIVE.frames.push(Math.sqrt(e / LFRAME));
+  }
+  liveTick();
+}
+function liveCut(k) { // 앞에서 k프레임(0.1초 단위)을 버려요
+  const n = Math.min(k * LFRAME, LIVE.len);
+  LIVE.buf.copyWithin(0, n, LIVE.len);
+  LIVE.len -= n; LIVE.base += n;
+  LIVE.frames.splice(0, k);
+}
+function liveTick() {
+  const fr = LIVE.frames, F = fr.length;
+  if (!F) return;
+  let peak = 0;
+  for (const r of fr) if (r > peak) peak = r;
+  if (peak < 0.006) { if (F > 4) liveCut(F - 3); return; } // 아직 조용함
+  const th = Math.max(0.006, peak * 0.12);
+  const first = fr.findIndex((r) => r >= th);
+  if (first > 4) { liveCut(first - 3); return liveTick(); } // 말 앞의 조용한 부분은 버려요
+  let quiet = 0;
+  for (let i = F - 1; i >= 0 && fr[i] < th; i--) quiet++;
+  if (quiet >= 6) { // 0.6초 멈춤 = 한 문장 끝
+    const loud = fr.reduce((a, r) => a + (r >= th), 0);
+    if (loud >= 3) liveCommit(F - quiet + 3); else liveCut(F - 2);
+    return;
+  }
+  if (F >= 120) { // 12초 넘게 계속되면 가장 조용한 곳에서 끊어요
+    let best = 60;
+    for (let i = 60; i < F; i++) if (fr[i] < fr[best]) best = i;
+    liveCommit(best + 1);
+    return;
+  }
+  if (!LIVE.interimBusy && LIVE.pending.length < 2 && F >= 8 && performance.now() - LIVE.lastInterim > 900) liveSend('interim', F);
+}
+function liveSend(kind, k) {
+  const n = Math.min(k * LFRAME, LIVE.len);
+  const audio = LIVE.buf.slice(0, n);
+  const id = ++LIVE.id;
+  const job = { id, kind, utt: LIVE.utt, t0: LIVE.offset + LIVE.base / LSR, t1: LIVE.offset + (LIVE.base + n) / LSR, preview: '' };
+  LIVE.jobs.set(id, job);
+  if (kind === 'interim') { LIVE.interimBusy = true; LIVE.lastInterim = performance.now(); }
+  else { job.preview = LIVE.interim; LIVE.pending.push(job); }
+  liveWorker().postMessage({ type: 'live', id, kind, audio, model: LIVE.model, language: $('liveLang').value, force: forceOpts() }, [audio.buffer]);
+}
+function liveCommit(k) {
+  liveSend('final', k);
+  liveCut(k);
+  LIVE.utt++;
+  LIVE.interim = '';
+  renderLive();
+}
+function onLiveMsg({ data: m }) {
+  if (m.type === 'loading') { if (!LIVE.ready) liveStatus(`AI 모델 준비 중… (${m.device === 'webgpu' ? '그래픽카드 가속' : 'CPU 모드'})`); return; }
+  if (m.type === 'progress') {
+    const p = m.data;
+    if (!LIVE.ready && p && p.status === 'progress' && p.total > 5e6) liveStatus(`AI 모델 내려받는 중… ${Math.round(p.loaded / 1048576)} / ${Math.round(p.total / 1048576)}MB (처음 한 번만)`);
+    return;
+  }
+  if (m.type === 'preloaded') { LIVE.ready = true; if (LIVE.on) liveStatus('듣고 있어요. 말소리가 나오면 자막이 떠요.', 'ok'); return; }
+  if (m.type === 'preload-error') { liveStatus('AI 모델을 준비하지 못했어요: ' + m.message, 'warn'); return; }
+  const j = LIVE.jobs.get(m.id);
+  if (!j) return;
+  LIVE.jobs.delete(m.id);
+  if (j.kind === 'interim') LIVE.interimBusy = false;
+  else LIVE.pending = LIVE.pending.filter((x) => x.id !== j.id);
+  if (m.type === 'live-error') liveStatus('받아 적다가 문제가 생겼어요: ' + m.message, 'warn');
+  else if (j.kind === 'interim') { if (LIVE.on && j.utt === LIVE.utt) LIVE.interim = m.text; }
+  else if (m.text) addLiveRow({ start: j.t0, end: j.t1, text: m.text });
+  if (LIVE.on && LIVE.ready && m.type !== 'live-error') {
+    const late = LIVE.pending.length >= 2;
+    liveStatus(late ? 'AI가 소리를 조금 늦게 따라가고 있어요. 계속 밀리면 정확도를 "빠름"으로 바꿔 보세요.' : '듣고 있어요.', late ? 'warn' : 'ok');
+  }
+  renderLive();
+}
+function addLiveRow(r) {
+  LIVE.rows.push(r);
+  const log = $('liveLog');
+  if (LIVE.rows.length === 1) log.innerHTML = '';
+  const near = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+  log.insertAdjacentHTML('beforeend', `<div class="live-row"><time>${fmtClock(r.start)}</time><span>${xmlEsc(r.text)}</span></div>`);
+  if (near) log.scrollTop = log.scrollHeight;
+  updateLiveSave();
+}
+function updateLiveSave() {
+  const n = LIVE.rows.length;
+  $('liveCount').textContent = n ? `${n}줄` : '';
+  $('liveClear').hidden = !n || LIVE.on;
+  $('btnLiveDocx').disabled = $('btnLiveTxt').disabled = !n;
+}
+// 큰 자막: 바로 앞 문장(흐리게) + 지금 문장. 아직 확정 안 된 글자는 조금 흐리게.
+function liveCaptionHTML() {
+  const tail = LIVE.rows.slice(-2).map((r) => r.text);
+  const now = [...LIVE.pending.map((p) => p.preview), LIVE.interim].filter(Boolean).join(' ');
+  const clip = (s) => (s.length > 90 ? '…' + s.slice(-88) : s);
+  let prev = '', cur = '', soft = false;
+  if (now) { prev = tail[tail.length - 1] || ''; cur = now; soft = true; }
+  else { prev = tail.length > 1 ? tail[0] : ''; cur = tail[tail.length - 1] || ''; }
+  if (!cur) return `<span class="live-idle">${LIVE.on ? '듣고 있어요… 말소리가 나오면 여기에 자막이 떠요.' : '오른쪽 [실시간 자막 시작]을 누르고, 화면 공유 창에서 "전체 화면"이나 "탭"을 고른 뒤 소리 공유를 켜 주세요.'}</span>`;
+  return `<span class="prev">${xmlEsc(clip(prev))}</span><span class="cur${soft ? ' interim' : ''}">${xmlEsc(clip(cur))}</span>`;
+}
+function renderLive() {
+  const html = liveCaptionHTML();
+  $('liveNow').innerHTML = html;
+  if (LIVE.pip) { const t = LIVE.pip.document.getElementById('t'); if (t) t.innerHTML = html; }
+}
+function setLiveUI(on) {
+  const b = $('btnLive');
+  b.textContent = on ? '실시간 자막 끄기' : '실시간 자막 시작';
+  b.classList.toggle('live-on', on);
+  $('liveModel').disabled = $('liveLang').disabled = on;
+  $('liveBadge').classList.toggle('on', on);
+  $('liveTag').innerHTML = on ? '켜짐' : '';
+  $('liveTag').classList.toggle('live', on);
+  document.title = on ? '● 실시간 자막 · ' + APP_TITLE : APP_TITLE;
+  updateLiveSave();
+}
+// testStream: 시험용으로 다른 소리를 넣을 때만 씀 (평소에는 화면 공유로 컴퓨터 소리를 받음)
+async function startLive(testStream) {
+  if (LIVE.on) return;
+  if (isRecording() || schedule) { liveStatus('녹화 중이거나 예약 녹화가 걸려 있으면 실시간 자막을 쓸 수 없어요.', 'warn'); return; }
+  let stream = testStream;
+  if (!stream) {
+    if (!navigator.mediaDevices?.getDisplayMedia) { liveStatus('이 브라우저는 컴퓨터 소리를 받을 수 없어요. Chrome이나 Edge로 열어 주세요.', 'warn'); return; }
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { max: 1 } },
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, suppressLocalAudioPlayback: false },
+        systemAudio: 'include', selfBrowserSurface: 'exclude', surfaceSwitching: 'include',
+      });
+    } catch (err) {
+      liveStatus(err.name === 'NotAllowedError' ? '화면 공유를 취소했어요.' : '화면 공유를 시작하지 못했어요: ' + err.message, 'warn');
+      return;
+    }
+  }
+  if (!stream.getAudioTracks().length) {
+    stream.getTracks().forEach((t) => t.stop());
+    liveStatus('소리 공유가 꺼져 있었어요. 다시 시작해서 "전체 화면"이나 "탭"을 고르고 "시스템 오디오 공유"를 켜 주세요.', 'warn');
+    return;
+  }
+  const tap = await startTap(stream, 3200);
+  if (!tap) { stream.getTracks().forEach((t) => t.stop()); liveStatus('소리를 받지 못했어요. Chrome이나 Edge 최신 버전에서 써 주세요.', 'warn'); return; }
+  const model = $('liveModel').value;
+  if (LIVE.model !== model) { LIVE.model = model; LIVE.ready = false; }
+  Object.assign(LIVE, { on: true, stream, tap, len: 0, base: 0, frames: [], utt: LIVE.utt + 1, interim: '', interimBusy: false, lastInterim: 0 });
+  tap.node.port.onmessage = (e) => liveIngest(e.data);
+  tap.on = true;
+  stream.getTracks().forEach((t) => t.addEventListener('ended', () => stopLive()));
+  liveWorker().postMessage({ type: 'preload', model, force: forceOpts() });
+  liveStatus(LIVE.ready ? '듣고 있어요. 말소리가 나오면 자막이 떠요.' : 'AI 모델 준비 중…', LIVE.ready ? 'ok' : '');
+  setLiveUI(true);
+  requestWake();
+  renderLive();
+}
+function stopLive() {
+  if (!LIVE.on) return;
+  // 하던 말이 남아 있으면 마저 받아 적어요
+  const fr = LIVE.frames;
+  if (fr.length >= 3 && fr.some((r) => r >= 0.01)) liveCommit(fr.length);
+  LIVE.on = false;
+  LIVE.offset += (LIVE.base + LIVE.len) / LSR; // 다시 시작하면 시간이 이어져요
+  LIVE.interim = '';
+  try { LIVE.stream.getTracks().forEach((t) => t.stop()); } catch {}
+  try { LIVE.tap.ctx.close(); } catch {}
+  LIVE.stream = LIVE.tap = null;
+  if (!isRecording() && !schedule) releaseWake();
+  setLiveUI(false);
+  liveStatus(LIVE.rows.length || LIVE.pending.length ? '실시간 자막을 껐어요. 받아 적은 내용은 워드나 메모장으로 저장할 수 있어요.' : '실시간 자막을 껐어요.', 'ok');
+  renderLive();
+}
+$('btnLive').onclick = () => (LIVE.on ? stopLive() : startLive());
+// 떠 있는 자막 창: 다른 프로그램 위에 항상 보이는 작은 창 (Chrome·Edge의 '문서 PIP' 기능)
+$('btnLivePip').onclick = async () => {
+  if (LIVE.pip) { LIVE.pip.close(); return; }
+  if (!('documentPictureInPicture' in window)) { liveStatus('이 브라우저는 떠 있는 자막 창을 지원하지 않아요. Chrome이나 Edge 최신 버전에서 써 주세요.', 'warn'); return; }
+  try {
+    const w = await documentPictureInPicture.requestWindow({ width: 760, height: 150 });
+    w.document.title = '실시간 자막';
+    const st = w.document.createElement('style');
+    st.textContent = `html,body{margin:0;height:100%;background:#111a2b;color:#fff;font-family:"Pretendard","Malgun Gothic",sans-serif}
+      body{display:flex;align-items:flex-end;justify-content:center;padding:10px 18px 14px;box-sizing:border-box;text-align:center}
+      #t{width:100%;font-size:clamp(16px,4.4vw,40px);line-height:1.4;font-weight:600;word-break:keep-all}
+      .prev{display:block;color:rgba(255,255,255,.5);font-size:.75em;font-weight:500}.cur{display:block}
+      .interim{color:rgba(255,255,255,.75)}.live-idle{color:rgba(255,255,255,.55);font-size:.55em;font-weight:400}`;
+    w.document.head.appendChild(st);
+    const t = w.document.createElement('div'); t.id = 't';
+    w.document.body.appendChild(t);
+    LIVE.pip = w;
+    w.addEventListener('pagehide', () => { LIVE.pip = null; $('btnLivePip').textContent = '떠 있는 자막 창 열기'; });
+    $('btnLivePip').textContent = '떠 있는 자막 창 닫기';
+    renderLive();
+  } catch (err) { liveStatus('떠 있는 자막 창을 열지 못했어요: ' + err.message, 'warn'); }
+};
+const liveTitle = () => '실시간자막_' + stamp();
+$('btnLiveTxt').onclick = () => { download(makeTxt('실시간 자막', LIVE.rows), liveTitle() + '.txt'); liveStatus('메모장 파일(.txt)로 저장했어요. 다운로드 폴더에서 열어 보세요.', 'ok'); };
+$('btnLiveDocx').onclick = () => { download(makeDocx('실시간 자막', LIVE.rows), liveTitle() + '.docx'); liveStatus('워드 파일(.docx)로 저장했어요. 다운로드 폴더에서 열어 보세요.', 'ok'); };
+$('liveClear').onclick = () => {
+  if (LIVE.on) return;
+  LIVE.rows = []; LIVE.offset = 0;
+  $('liveLog').innerHTML = '<div class="empty">아직 받아 적은 내용이 없어요.</div>';
+  updateLiveSave(); renderLive();
+};
 
 if (location.protocol === 'file:') {
   $('scr-home').insertAdjacentHTML('afterbegin',

@@ -162,6 +162,20 @@ async function handle(msg) {
     }
     return;
   }
+  // 실시간 자막: 짧은 조각(30초 미만) 하나를 바로 받아 적어 돌려줘요. 시간 정보 없이 글자만 (더 빨라요).
+  if (msg.type === 'live') {
+    try {
+      const device = await load(msg.model, msg.force);
+      const t0 = performance.now();
+      const opts = { task: 'transcribe' };
+      if (msg.language) opts.language = msg.language;
+      const out = await asr(msg.audio, opts);
+      self.postMessage({ type: 'live-result', id: msg.id, kind: msg.kind, text: cleanText(out.text), ms: performance.now() - t0, device });
+    } catch (err) {
+      self.postMessage({ type: 'live-error', id: msg.id, message: String((err && err.message) || err) });
+    }
+    return;
+  }
   const { model, language, force } = msg;
   const audio = msg.pcm16 || msg.audio;
   const scale = msg.pcm16 ? 1 / 32768 : 1;
