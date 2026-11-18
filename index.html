@@ -606,12 +606,12 @@
   .recent .r .del:hover, .recent .r .ren:hover { background: #d3dff0; }
   .file .editable:hover, .file .editable:focus-visible { background: #eef3fa; }
 
-  /* 하늘 배경: 레퍼런스 하늘 사진 그대로 (assets/sky.jpg). 화면 비율이 달라 사진의 일부를 잘라서 채워요 */
-  .scene .sky { background: #4b97ea url("assets/sky.jpg") center top / cover no-repeat; }
+  /* 하늘 배경: 옅은 하늘 사진 (assets/sky.jpg). 화면 비율이 달라 사진의 일부를 잘라서 채워요 */
+  .scene .sky { background: #a9cbee url("assets/sky.jpg") center 35% / cover no-repeat; }
   .scene .sky::before, .scene .sky::after { content: none; }
   .scene .stars, .scene .grain, .scene .clouds { display: none; }
   /* 해: 왼쪽 위 (녹화 중에는 붉게 바뀌어 녹화 중임을 알려요) */
-  .scene .orb { left: 2.5%; top: 3%; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,.7) 0%, rgba(255,255,255,.35) 30%, rgba(255,255,255,0) 70%); filter: blur(4px); }
+  .scene .orb { left: 2.5%; top: 3%; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,.45) 0%, rgba(255,255,255,.2) 30%, rgba(255,255,255,0) 70%); filter: blur(4px); }
   .scene .orb::after { background: radial-gradient(circle, rgba(255,255,255,.35), transparent 60%); }
   .recording .scene .orb { background: radial-gradient(circle, #ffd6d0 0%, #ff7a6c 30%, rgba(255,75,62,.45) 52%, transparent 72%); }
   .scene .clouds { position: absolute; left: -3%; width: 106%; bottom: -40px; height: 48%; filter: blur(9px); }
@@ -622,14 +622,12 @@
   /* 첫 화면 글자·버튼 */
   .logo { color: var(--ink); }
   .logo i { background: var(--orange); box-shadow: 0 0 12px rgba(63,116,208,.55); }
-  /* 위쪽은 하늘이 짙어서 메뉴 글자는 흰색, 버튼은 흰 바탕 */
-  .links button { color: rgba(255,255,255,.92); text-shadow: 0 1px 6px rgba(15,50,120,.25); }
-  .links button:hover:not(:disabled) { color: #fff; }
-  .links button:disabled { color: rgba(255,255,255,.5); }
+  /* 옅은 하늘이라 메뉴 글자는 진한 남색 (흰 구름 위에서도 보이게 살짝 흰 테두리 빛) */
+  .links button { color: #1f3a66; text-shadow: 0 0 8px rgba(255,255,255,.7); }
+  .links button:hover:not(:disabled) { color: #0f2448; }
+  .links button:disabled { color: rgba(31,58,102,.45); }
   .pill-btn { background: var(--orange); border-color: var(--orange); color: #fff; backdrop-filter: none; box-shadow: 0 6px 16px rgba(63,116,208,.25); }
   .pill-btn:hover { background: #3366c2; }
-  .topbar .pill-btn { background: #fff; border-color: #fff; color: #2f62c2; box-shadow: 0 6px 16px rgba(15,50,120,.18); }
-  .topbar .pill-btn:hover { background: #eef5ff; }
   .eyebrow { color: #24406e; }
   .headline { color: #13254a; }
   .headline em { color: #ffffff; text-shadow: 0 2px 18px rgba(20,60,140,.35); }
@@ -641,8 +639,8 @@
   .timer { color: var(--ink); }
   .chip { color: #33496f; border-color: rgba(63,116,208,.18); background: rgba(255,255,255,.55); }
   .chip b { color: var(--ink); }
-  .steps-rail span { color: rgba(255,255,255,.6); }
-  .steps-rail span.on { color: #fff; }
+  .steps-rail span { color: rgba(29,43,69,.45); }
+  .steps-rail span.on { color: var(--ink); }
 
   /* 최근 작업 */
   .strip-head { color: #4d6288; }
